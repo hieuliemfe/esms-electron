@@ -15,7 +15,8 @@ import { app, BrowserWindow, Menu } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 // import MenuBuilder from './menu';
-// import { spawn } from 'child_process';
+import { spawn } from 'child_process';
+import net from 'net';
 
 export default class AppUpdater {
   constructor() {
@@ -111,23 +112,50 @@ const createWindow = async () => {
   Menu.setApplicationMenu(null);
 };
 
-// const ls = spawn(path.join(__dirname, '../venv/1/Scripts/python.exe'), [
-//   path.join(__dirname, '../esms-desktop/app.py'),
-// ]).on('error', (err) => {
-//   console.error(err);
-// });
+export const spawnChildProccess = (
+  command: string,
+  options: readonly string[]
+) => {
+  const ls = spawn(command, options).on('error', (err: Error) => {
+    console.error('Child process spawning error:', err);
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    childProcess = spawnChildProccess(command, options);
+  });
+  return ls;
+};
 
-// ls.stdout.on('data', (data) => {
-//   console.log(`[stdout]:-- ${data}`);
-// });
+let childProcess = spawnChildProccess(
+  path.join(__dirname, '../venv/1/Scripts/python.exe'),
+  [path.join(__dirname, '../esms-desktop/test_socket.py')]
+);
 
-// ls.stderr.on('data', (data) => {
-//   console.error(`[stderr]:-- ${data}`);
-// });
+export const createCommunicationSocket = (dataHandler: CallableFunction) => {
+  const comSoc = new net.Socket();
+  comSoc.connect(12345, 'localhost');
+  comSoc.on('data', (data: Buffer) => {
+    dataHandler(data.toString());
+  });
+  comSoc.on('error', (err: Error) => {
+    console.log('Error:', err);
+  });
+  comSoc.on('close', () => {
+    if (!childProcess.killed) {
+      comSoc.connect(12345, 'localhost');
+    }
+  });
+  return comSoc;
+};
 
-// ls.on('close', (code) => {
-//   console.log(`Child Process exited with code ${code}`);
-// });
+export const COMSOC_HANDLERS: CallableFunction[] = [];
+
+const handleComSocData = (data: string) => {
+  console.log('ComSoc data:', data);
+  COMSOC_HANDLERS.forEach((handler: CallableFunction) => {
+    handler(data);
+  });
+};
+
+export const COMMUNICATION_SOCKET = createCommunicationSocket(handleComSocData);
 
 /**
  * Add event listeners...

@@ -4,7 +4,9 @@ import { RootState } from '../../store';
 
 const cameraSlice = createSlice({
   name: 'camera',
-  initialState: { frame64: 'Hello Camera' },
+  initialState: {
+    frame64: '',
+  },
   reducers: {
     updateFrame: (state, { payload }) => {
       state.frame64 = payload;
