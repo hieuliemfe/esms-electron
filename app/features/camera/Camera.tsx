@@ -54,7 +54,7 @@ export default function Camera() {
     COMSOC_HANDLERS.push((detectData: string) => {
       console.log('Detect data:', detectData);
     });
-    COMMUNICATION_SOCKET.emit('data', Buffer.from('start'));
+    COMMUNICATION_SOCKET.emit('data', Buffer.from('end'));
     clientState.needRetryConnect = false;
     setTimeout(() => {
       setFrame(path.join(__dirname, '../resources/video.jpg'));
