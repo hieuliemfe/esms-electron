@@ -17,14 +17,12 @@ export default function Camera() {
   });
   return (
     <div>
-      <div className={styles.backButton} data-tid="backButton">
+      <div className={styles.backButton}>
         <Link to={routes.HOME}>
           <i className="fa fa-arrow-left fa-3x" />
         </Link>
       </div>
-      <div className={`counter ${styles.counter}`} data-tid="counter">
-        {frame}
-      </div>
+      <div className={styles.camera}>{frame}</div>
     </div>
   );
 }

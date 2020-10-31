@@ -5,7 +5,7 @@ import styles from './Home.css';
 
 export default function Home(): JSX.Element {
   return (
-    <div className={styles.container} data-tid="container">
+    <div className={styles.container}>
       <h2>Home</h2>
       <p>
         <Link to={routes.COUNTER}>to Counter</Link>

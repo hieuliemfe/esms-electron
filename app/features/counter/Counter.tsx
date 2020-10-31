@@ -16,21 +16,18 @@ export default function Counter() {
   const value = useSelector(selectCount);
   return (
     <div>
-      <div className={styles.backButton} data-tid="backButton">
+      <div className={styles.backButton}>
         <Link to={routes.HOME}>
           <i className="fa fa-arrow-left fa-3x" />
         </Link>
       </div>
-      <div className={`counter ${styles.counter}`} data-tid="counter">
-        {value}
-      </div>
+      <div className={`counter ${styles.counter}`}>{value}</div>
       <div className={styles.btnGroup}>
         <button
           className={styles.btn}
           onClick={() => {
             dispatch(increment());
           }}
-          data-tclass="btn"
           type="button"
         >
           <i className="fa fa-plus" />
@@ -40,7 +37,6 @@ export default function Counter() {
           onClick={() => {
             dispatch(decrement());
           }}
-          data-tclass="btn"
           type="button"
         >
           <i className="fa fa-minus" />
@@ -50,7 +46,6 @@ export default function Counter() {
           onClick={() => {
             dispatch(incrementIfOdd());
           }}
-          data-tclass="btn"
           type="button"
         >
           odd
@@ -60,7 +55,6 @@ export default function Counter() {
           onClick={() => {
             dispatch(incrementAsync());
           }}
-          data-tclass="btn"
           type="button"
         >
           async
