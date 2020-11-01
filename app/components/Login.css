@@ -1,0 +1,67 @@
+.container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+}
+
+.logoWrapper {
+  width: 50%;
+  display: block;
+  padding: 10px 30px 0 30px;
+}
+
+.logoImage {
+  display: block;
+  max-width: 100%;
+}
+
+.loginFormWrapper {
+  width: 50%;
+  display: block;
+}
+
+.title {
+  text-align: center;
+  color: #888;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.title span {
+  color: #42526e;
+}
+
+.title span::before {
+  content: ' ';
+}
+
+.formLogin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fieldWrapper {
+  display: block;
+  margin-top: 10px;
+  width: fit-content;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 13px;
+}
+
+.fieldInput {
+  display: block;
+  padding: 3px 5px;
+}
+
+.btnLogin {
+  display: block;
+  margin-top: 10px;
+  cursor: pointer;
+}

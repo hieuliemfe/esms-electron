@@ -3,7 +3,19 @@ import React from 'react';
 import { Switch, Route } from 'react-router-dom';
 import routes from './constants/routes.json';
 import App from './containers/App';
-import HomePage from './containers/HomePage';
+import LoginPage from './containers/LoginPage';
+
+// Lazily load routes and code split with webpack
+const LazyHomePage = React.lazy(() =>
+  import(/* webpackChunkName: "HomePage" */ './containers/HomePage')
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const HomePage = (props: Record<string, any>) => (
+  <React.Suspense fallback={<h1>Loading...</h1>}>
+    <LazyHomePage {...props} />
+  </React.Suspense>
+);
 
 // Lazily load routes and code split with webpack
 const LazyCounterPage = React.lazy(() =>
@@ -36,6 +48,7 @@ export default function Routes() {
         <Route path={routes.COUNTER} component={CounterPage} />
         <Route path={routes.CAMERA} component={CameraPage} />
         <Route path={routes.HOME} component={HomePage} />
+        <Route path={routes.LOGIN} component={LoginPage} />
       </Switch>
     </App>
   );
