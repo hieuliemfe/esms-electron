@@ -1,65 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import path from 'path';
-import net from 'net';
 import styles from './Camera.css';
 import routes from '../../constants/routes.json';
-import { COMMUNICATION_SOCKET, COMSOC_HANDLERS } from '../../main.dev';
+import {
+  createClientSocket,
+  setComSocHandler,
+  COMMUNICATION_SOCKET,
+} from '../../socket.dev';
 
 export const clientState = {
   needRetryConnect: true,
-};
-
-export const createClientSocket = async (
-  port: number,
-  callback: CallableFunction
-) => {
-  const client = new net.Socket();
-  client.connect(port, 'localhost');
-  client.on('data', (data: Buffer) => {
-    callback(data.toString());
-  });
-  client.on('error', (err: Error) => {
-    console.log('Error:', err);
-  });
-  client.on('close', () => {
-    if (clientState.needRetryConnect) {
-      client.connect(port, 'localhost');
-    }
-  });
 };
 
 export default function Camera() {
   const [frame, setFrame] = useState(
     path.join(__dirname, '../resources/video.jpg')
   );
+  const [start, setStart] = useState(false);
   const [kill, setKill] = useState(false);
 
   useEffect(() => {
-    if (COMMUNICATION_SOCKET) {
-      COMSOC_HANDLERS.length = 0;
-      COMSOC_HANDLERS.push((portStr: string) => {
-        createClientSocket(Number.parseInt(portStr, 10), (data: string) => {
-          setFrame(`data:image/jpeg;base64,${data}`);
-        });
+    if (COMMUNICATION_SOCKET.SOCKET) {
+      setComSocHandler((payload: string) => {
+        console.log('payload', payload);
+        const type = payload.substring(0, payload.indexOf(':'));
+        const dataStr = payload.substring(payload.indexOf(':') + 1);
+        console.log('type', type);
+        switch (type) {
+          case 'StreamPort':
+            createClientSocket(
+              Number.parseInt(dataStr, 10),
+              (data: string) => {
+                if (data[0] === '{') {
+                  const response = JSON.parse(data);
+                  console.log('response.is_warning', response.is_warning);
+                  console.log('response.emotion', response.emotion);
+                  setFrame(`data:image/png;base64,${response.img_src}`);
+                }
+              },
+              () => clientState.needRetryConnect
+            );
+            break;
+          case 'SessionResult':
+            setFrame(path.join(__dirname, '../resources/video.jpg'));
+            break;
+          default:
+            break;
+        }
       });
-      COMMUNICATION_SOCKET.emit('data', Buffer.from('start'));
+      if (!start && !kill) {
+        COMMUNICATION_SOCKET.SOCKET.write('start');
+        setStart(true);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kill]);
+  }, [start, kill]);
 
   const handleKill = () => {
-    setKill(true);
-    COMSOC_HANDLERS.length = 0;
-    COMSOC_HANDLERS.push((detectData: string) => {
-      console.log('Detect data:', detectData);
-    });
-    COMMUNICATION_SOCKET.emit('data', Buffer.from('end'));
+    if (COMMUNICATION_SOCKET.SOCKET) {
+      COMMUNICATION_SOCKET.SOCKET.write('end');
+      setStart(false);
+      setKill(true);
+    }
     clientState.needRetryConnect = false;
-    setTimeout(() => {
-      setFrame(path.join(__dirname, '../resources/video.jpg'));
-      setKill(false);
-    });
   };
 
   return (

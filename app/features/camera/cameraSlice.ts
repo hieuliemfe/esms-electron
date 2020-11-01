@@ -5,17 +5,18 @@ import { RootState } from '../../store';
 const cameraSlice = createSlice({
   name: 'camera',
   initialState: {
-    frame64: '',
+    communicationSocket: {},
   },
   reducers: {
-    updateFrame: (state, { payload }) => {
-      state.frame64 = payload;
+    updateCommunicationSocket: (state, { payload }) => {
+      state.communicationSocket = payload;
     },
   },
 });
 
-export const { updateFrame } = cameraSlice.actions;
+export const { updateCommunicationSocket } = cameraSlice.actions;
 
 export default cameraSlice.reducer;
 
-export const selectFrame = (state: RootState) => state.camera.frame64;
+export const selectCommunicationSocket = (state: RootState) =>
+  state.camera.communicationSocket;

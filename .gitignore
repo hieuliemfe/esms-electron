@@ -1,3 +1,6 @@
+venv/
+detection/*
+!detection/.gitkeep
 # Logs
 logs
 *.log
