@@ -11,7 +11,7 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, ipcMain, dialog, BrowserWindow, Menu } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 // import MenuBuilder from './menu';
@@ -115,6 +115,14 @@ const createWindow = async () => {
 /**
  * Add event listeners...
  */
+
+ipcMain.on('login-failed', () => {
+  dialog.showMessageBoxSync({
+    title: 'Login FAILED',
+    message: 'Invalid Employee Code or Password',
+    type: 'error',
+  });
+});
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even

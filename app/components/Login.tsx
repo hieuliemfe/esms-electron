@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/no-autofocus */
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { ipcRenderer } from 'electron';
 import routes from '../constants/routes.json';
 import { login } from '../services/root';
 import styles from './Login.css';
@@ -8,8 +9,6 @@ import logo from '../../resources/esms_logo.png';
 
 export default function Login(): JSX.Element {
   const { register, handleSubmit } = useForm();
-  // const { dialog } = require('electron').remote;
-  // console.log('dialog', dialog);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
@@ -18,10 +17,7 @@ export default function Login(): JSX.Element {
       console.log(response);
     } catch (error) {
       console.log(error);
-      // dialog.showErrorBox(
-      //   'Login FAILED',
-      //   'Incorrect Employee Code or Password'
-      // );
+      ipcRenderer.send('login-failed');
     }
   };
 
