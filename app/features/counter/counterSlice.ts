@@ -20,7 +20,7 @@ export const { increment, decrement } = counterSlice.actions;
 export const incrementIfOdd = (): AppThunk => {
   return (dispatch, getState) => {
     const state = getState();
-    if (state.counter.value % 2 === 0) {
+    if (state) {
       return;
     }
     dispatch(increment());
@@ -35,4 +35,4 @@ export const incrementAsync = (delay = 1000): AppThunk => (dispatch) => {
 
 export default counterSlice.reducer;
 
-export const selectCount = (state: RootState) => state.counter.value;
+export const selectCount = (state: RootState) => state;

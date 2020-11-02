@@ -1,22 +1,35 @@
 /* eslint-disable jsx-a11y/no-autofocus */
 import React from 'react';
+import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { ipcRenderer } from 'electron';
-import routes from '../constants/routes.json';
-import { login } from '../services/root';
+import { useHistory } from 'react-router-dom';
+import routes from '../../constants/routes.json';
+import { login } from '../../services/root';
+import { setToken, setUserInfo } from './loginSlice';
+import { setToken as setRequestToken } from '../../utils/request';
 import styles from './Login.css';
-import logo from '../../resources/esms_logo.png';
+import logo from '../../../resources/esms_logo.png';
 
-export default function Login(): JSX.Element {
+export default function Login() {
+  const dispatch = useDispatch();
   const { register, handleSubmit } = useForm();
+  const history = useHistory();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     try {
       const response = await login(data.empCode, data.empPass);
-      console.log(response);
+      if (response) {
+        if (response.status) {
+          dispatch(setUserInfo(JSON.parse(JSON.stringify(response.message))));
+          dispatch(setToken(response.token));
+          setRequestToken(response.token);
+          ipcRenderer.send('login-success');
+          history.push(routes.HOME);
+        }
+      }
     } catch (error) {
-      console.log(error);
       ipcRenderer.send('login-failed');
     }
   };

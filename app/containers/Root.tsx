@@ -5,14 +5,11 @@ import { hot } from 'react-hot-loader/root';
 import { History } from 'history';
 import { Store } from '../store';
 import Routes from '../Routes';
-import runChildProcess from '../socket.dev';
 
 type Props = {
   store: Store;
   history: History;
 };
-
-runChildProcess();
 
 const Root = ({ store, history }: Props) => (
   <Provider store={store}>

@@ -48,7 +48,15 @@ if (
 //   ).catch(console.log);
 // };
 
-const createWindow = async () => {
+const RESOURCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'resources')
+  : path.join(__dirname, '../resources');
+
+const getAssetPath = (...paths: string[]): string => {
+  return path.join(RESOURCES_PATH, ...paths);
+};
+
+const createMainWindow = async () => {
   // if (
   //   process.env.NODE_ENV === 'development' ||
   //   process.env.DEBUG_PROD === 'true'
@@ -56,20 +64,13 @@ const createWindow = async () => {
   //   await installExtensions();
   // }
 
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'resources')
-    : path.join(__dirname, '../resources');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
-
   mainWindow = new BrowserWindow({
     show: false,
     width: 500,
-    height: 250,
-    resizable: true,
+    height: 290,
+    resizable: false,
     maximizable: false,
+    movable: false,
     icon: getAssetPath('esms_logo.png'),
     webPreferences:
       (process.env.NODE_ENV === 'development' ||
@@ -87,13 +88,14 @@ const createWindow = async () => {
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
-  mainWindow.webContents.on('did-finish-load', () => {
+  mainWindow.once('ready-to-show', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
+      mainWindow.webContents.closeDevTools();
       mainWindow.show();
       mainWindow.focus();
     }
@@ -112,16 +114,28 @@ const createWindow = async () => {
   Menu.setApplicationMenu(null);
 };
 
+const createWindows = async () => {
+  await createMainWindow();
+};
+
 /**
  * Add event listeners...
  */
 
 ipcMain.on('login-failed', () => {
-  dialog.showMessageBoxSync({
-    title: 'Login FAILED',
-    message: 'Invalid Employee Code or Password',
-    type: 'error',
-  });
+  if (mainWindow) {
+    dialog.showMessageBoxSync(mainWindow, {
+      title: 'Login FAILED',
+      message: 'Invalid Employee Code or Password',
+      type: 'error',
+    });
+  }
+});
+
+ipcMain.on('login-success', () => {
+  if (mainWindow) {
+    mainWindow.maximize();
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -134,13 +148,13 @@ app.on('window-all-closed', () => {
 
 if (process.env.E2E_BUILD === 'true') {
   // eslint-disable-next-line promise/catch-or-return
-  app.whenReady().then(createWindow);
+  app.whenReady().then(createWindows);
 } else {
-  app.on('ready', createWindow);
+  app.on('ready', createWindows);
 }
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) createWindow();
+  if (mainWindow === null) createMainWindow();
 });
