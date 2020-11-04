@@ -6,9 +6,9 @@ type UserInfo = {
 };
 
 type LoginResponse = {
-  message: UserInfo;
   status: boolean;
   token: string;
+  message: UserInfo;
 };
 
 export async function login(
