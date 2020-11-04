@@ -61,7 +61,7 @@ async function request(
 
 let TOKEN: string | null = null;
 
-export const setToken = (token: string) => {
+export const setToken = (token: string | null) => {
   TOKEN = token;
 };
 
@@ -82,8 +82,8 @@ async function requestWithAuth(
   options?: RequestInit
 ): Promise<unknown | { err: ResponseError }> {
   const opts = options || {};
-  if (TOKEN && !opts.headers) {
-    const headers = new Headers();
+  if (TOKEN) {
+    const headers = new Headers(opts.headers);
     headers.append('Authorization', `Bearer ${TOKEN}`);
     opts.headers = headers;
   }
@@ -167,4 +167,9 @@ export default {
   post: methodPost,
   put: methodPut,
   delete: methodDelete,
+};
+
+export type EsmsResponse<T> = {
+  status: boolean;
+  message: T;
 };

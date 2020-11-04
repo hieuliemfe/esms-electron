@@ -2,3 +2,6 @@ numpy==1.18.*
 opencv-python==4.4.0.*
 tensorflow==2.3.*
 pyinstaller==4.0
+gcloud==0.18.3
+httplib2==0.15.0
+imutils==0.5.3

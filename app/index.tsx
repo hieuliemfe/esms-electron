@@ -8,9 +8,8 @@ import './app.global.css';
 
 runChildProcess();
 
-ipcRenderer.on('finish-resize-window', (ev, route: string) => {
-  console.log('ipcRenderer event', ev);
-  console.log('ipcRenderer route', route);
+ipcRenderer.on('close-prevented', (ev) => {
+  console.log('ipcRenderer close-prevented event', ev);
 });
 
 const store = configuredStore();

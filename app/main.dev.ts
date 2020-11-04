@@ -70,7 +70,6 @@ const createMainWindow = async () => {
     height: 290,
     resizable: false,
     maximizable: false,
-    movable: false,
     icon: getAssetPath('esms_logo.png'),
     webPreferences:
       (process.env.NODE_ENV === 'development' ||
@@ -135,6 +134,12 @@ ipcMain.on('login-failed', () => {
 ipcMain.on('login-success', () => {
   if (mainWindow) {
     mainWindow.maximize();
+  }
+});
+
+ipcMain.on('logout', () => {
+  if (mainWindow) {
+    mainWindow.unmaximize();
   }
 });
 

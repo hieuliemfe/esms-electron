@@ -1,6 +1,7 @@
-import request from '../utils/request';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import request, { EsmsResponse } from '../utils/request';
 
-type ShiftInfo = {
+export type ShiftInfo = {
   id: number;
   employeeId: string;
   counterId: number;
@@ -10,20 +11,17 @@ type ShiftInfo = {
   shiftTypeId: number;
 };
 
-type ShiftResponse = {
-  status: boolean;
-  message: ShiftInfo[];
-};
+type ShiftResponse = EsmsResponse<ShiftInfo[]>;
 
 export async function getShifts(): Promise<ShiftResponse> {
   return request.get('/shifts') as Promise<ShiftResponse>;
 }
 
-export async function getActiveShifts(): Promise<ShiftResponse> {
+export async function getActiveShift(): Promise<ShiftResponse> {
   return request.get('/shifts/active-shift') as Promise<ShiftResponse>;
 }
 
-type ShiftSummary = {
+export type ShiftSummary = {
   totalSessions: number;
   neutralSessions: number;
   positiveSessions: number;
@@ -36,10 +34,7 @@ type ShiftSummary = {
   stressSolution: any | null;
 };
 
-type ShiftSummaryResponse = {
-  status: boolean;
-  message: ShiftSummary;
-};
+type ShiftSummaryResponse = EsmsResponse<ShiftSummary>;
 
 export async function getShiftSummary(
   shiftId: number
@@ -51,4 +46,8 @@ export async function getShiftSummary(
 
 export async function checkinShift(shiftId: number) {
   return request.put(`/shifts/${shiftId}/checkin`);
+}
+
+export async function checkoutShift(shiftId: number) {
+  return request.put(`/shifts/${shiftId}/checkout`);
 }

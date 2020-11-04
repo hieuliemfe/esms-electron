@@ -34,8 +34,6 @@ export default function Camera() {
               (data: string) => {
                 if (data[0] === '{') {
                   const response = JSON.parse(data);
-                  console.log('response.is_warning', response.is_warning);
-                  console.log('response.emotion', response.emotion);
                   setFrame(`data:image/png;base64,${response.img_src}`);
                 }
               },
@@ -50,7 +48,11 @@ export default function Camera() {
         }
       });
       if (!start && !kill) {
-        COMMUNICATION_SOCKET.SOCKET.write('start');
+        const evidenceFolder = path.join(
+          __dirname,
+          '../evidences/session_test/'
+        );
+        COMMUNICATION_SOCKET.SOCKET.write(`start:${evidenceFolder}`);
         setStart(true);
       }
     }

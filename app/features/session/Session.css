@@ -1,0 +1,151 @@
+.container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.headerWrapper {
+  width: 100%;
+  padding: 0 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.completeSessionBtn {
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.title {
+  color: #999;
+  font-size: 32px;
+  margin-top: 15px;
+  margin-bottom: 30px;
+  font-weight: normal;
+}
+
+.title span {
+  color: #42526e;
+}
+
+.title span::after {
+  content: ' ';
+}
+
+.workspaceWrapper {
+  display: flex;
+  width: 100%;
+  flex: auto;
+  padding: 5px;
+}
+
+.leftWrapper {
+  display: flex;
+  width: 20%;
+  flex-direction: column;
+}
+
+.cameraWrapper {
+  display: flex;
+  width: 100%;
+  height: 225px;
+  border: 1px solid #42526e;
+  align-items: center;
+  overflow-y: hidden;
+  padding: 10px;
+}
+
+.cameraImage {
+  display: block;
+  width: 100%;
+}
+
+.taskWrapper {
+  width: 100%;
+  height: calc(80vh - 320px);
+  flex: auto;
+  border: 1px solid #42526e;
+  margin-top: 3px;
+}
+
+.taskTitleWrapper {
+  width: 100%;
+  padding: 20px;
+  background-color: #4f6ca0;
+}
+
+.taskTitle {
+  color: #fff;
+  font-size: 20px;
+  font-weight: normal;
+}
+
+.categoryTaskWrapper {
+  height: calc(100% - 63px);
+  overflow-y: auto;
+}
+
+.categoryWrapper {
+  width: 100%;
+  padding: 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.categoryNameWrapper {
+  width: 100%;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  padding-left: 20px;
+  background-color: #eee;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.categoryNameWrapper:hover {
+  color: #0959e4;
+}
+
+.categoryName {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.categoryWrapper ul {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.categoryWrapper li {
+  width: 100%;
+  margin: 0;
+}
+
+.taskNameWrapper {
+  width: 100%;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  padding-left: 30px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.taskNameWrapper:hover {
+  background-color: #b4c7ea;
+}
+
+.taskName {
+  font-size: 14px;
+}
+
+.contentWrapper {
+  width: 100%;
+  border: 1px solid #42526e;
+  margin-left: 3px;
+}

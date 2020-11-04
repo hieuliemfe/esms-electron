@@ -1,6 +1,9 @@
 {
   "LOGIN": "/",
   "HOME": "/home",
+  "CHECKIN": "/checkin",
+  "WAITING_LIST": "/waiting-list",
+  "SESSION": "/session",
   "COUNTER": "/counter",
   "CAMERA": "/camera"
 }

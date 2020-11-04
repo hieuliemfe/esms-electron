@@ -1,6 +1,6 @@
 import request from '../utils/request';
 
-type UserInfo = {
+type LoginInfo = {
   employeeCode: string;
   roleName: string;
 };
@@ -8,7 +8,7 @@ type UserInfo = {
 type LoginResponse = {
   status: boolean;
   token: string;
-  message: UserInfo;
+  message: LoginInfo;
 };
 
 export async function login(
@@ -21,13 +21,27 @@ export async function login(
   }) as Promise<LoginResponse>;
 }
 
-export async function register(
-  fullname: string,
-  phoneNumber: string,
-  avatarUrl: string
-) {
-  const payload = { fullname, phoneNumber, avatarUrl, roleId: 3 };
-  return request.post('/register', {
-    body: JSON.stringify(payload),
-  });
+type RoleInfo = {
+  id: number;
+  roleName: string;
+};
+
+export type ProfileInfo = {
+  id: string;
+  employeeCode: string;
+  email: string;
+  fullname: string;
+  phoneNumber: string;
+  avatarUrl: string;
+  isSubscribed: boolean;
+  Role: RoleInfo;
+};
+
+type ProfileResponse = {
+  status: boolean;
+  message: ProfileInfo;
+};
+
+export async function getProfile(): Promise<ProfileResponse> {
+  return request.get('/profile') as Promise<ProfileResponse>;
 }
