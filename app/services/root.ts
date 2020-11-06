@@ -1,4 +1,5 @@
 import request from '../utils/request';
+import { ProfileInfo } from '../features/login/loginSlice';
 
 type LoginInfo = {
   employeeCode: string;
@@ -20,22 +21,6 @@ export async function login(
     body: JSON.stringify(payload),
   }) as Promise<LoginResponse>;
 }
-
-type RoleInfo = {
-  id: number;
-  roleName: string;
-};
-
-export type ProfileInfo = {
-  id: string;
-  employeeCode: string;
-  email: string;
-  fullname: string;
-  phoneNumber: string;
-  avatarUrl: string;
-  isSubscribed: boolean;
-  Role: RoleInfo;
-};
 
 type ProfileResponse = {
   status: boolean;

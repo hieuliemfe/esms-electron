@@ -113,7 +113,7 @@ span.infoName {
   content: ' ';
 }
 
-.shiftListWrapper {
+.sessionHistoryWrapper {
   display: block;
   margin-top: 50px;
   max-height: calc(100vh - 150px);
@@ -121,60 +121,87 @@ span.infoName {
   border: 1px solid #42526e;
 }
 
-.shiftCard {
+.sessionCard {
   display: block;
-  width: 600px;
+  width: 800px;
   padding: 20px 30px;
   border-bottom: 1px solid #42526e;
+  cursor: pointer;
 }
 
-.shiftCard button {
+.sessionCard button {
   cursor: pointer;
   visibility: hidden;
   padding: 5px 10px;
 }
 
-.shiftCard.hover:hover {
-  background-color: #466190;
-  color: #fff;
+.sessionCard:hover {
+  background-color: #cbdaf7;
 }
 
-.shiftCard.hover:hover button {
+.sessionCard:hover button {
   display: block;
   visibility: visible;
 }
 
-.shiftTitleWrapper {
+.sessionHeaderWrapper {
   display: flex;
   justify-content: space-between;
 }
 
-span.shiftTitle {
+span.sessionTitle {
   display: block;
   font-weight: bold;
   font-size: 15px;
-  margin-bottom: 10px;
-}
-
-.shiftCard.hover span.shiftTitle {
   margin-bottom: 25px;
 }
 
-span.shiftTitle.noShift {
+span.emotionLevel {
+  display: block;
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+span.sessionTitle.noSession {
   margin: 20px 0;
   color: #999;
   text-align: center;
 }
 
-.shiftTimeWrapper {
+.sessionFooterWrapper {
   display: flex;
   justify-content: space-between;
 }
 
-span.shiftTime {
+.sessionTimeWrapper {
+  display: block;
+}
+
+span.sessionTime {
+  display: block;
   color: #999;
 }
 
-.shiftCard.hover:hover span.shiftTime {
-  color: #ddd;
+.sessionCard:hover span.sessionTime {
+  color: #666;
+}
+
+span.sessionEvaluate {
+  display: block;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+span.sessionEvaluate.Positive {
+  color: #34a853;
+}
+
+span.sessionEvaluate.Negative {
+  color: #ea4335;
+}
+
+span.sessionEvaluate.Neutral {
+  color: #4285f4;
 }

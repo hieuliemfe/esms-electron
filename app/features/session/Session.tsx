@@ -6,16 +6,25 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import path from 'path';
-import { ipcRenderer } from 'electron';
-import routes from '../../constants/routes.json';
-import { startSession } from '../../services/sessions';
+import {
+  startSession,
+  endSession,
+  EmotionInfo,
+  EmotionPeriodInfo,
+  EndSessionInfo,
+} from '../../services/sessions';
 import {
   getCounterCategory,
   getCategoryTasks,
   CategoryInfo,
 } from '../../services/categories';
-import { selectSessionId } from './sessionSlice';
+import {
+  setSessionDetectedResult,
+  selectSessionId,
+  SessionDetectedInfo,
+} from './sessionSlice';
 import { selectCounterId } from '../login/loginSlice';
+import { setShow } from '../../components/modals/angryWarningModalSlice';
 import {
   createClientSocket,
   setComSocHandler,
@@ -37,6 +46,9 @@ export default function Session() {
   const [needRetryConnect] = useState({ value: true });
   const [start, setStart] = useState(false);
   const [kill, setKill] = useState(false);
+  let sessionDetectedResult: SessionDetectedInfo;
+  let sessionEmotionInfo: EmotionInfo[] = [];
+  let endSessionInfo: EndSessionInfo;
 
   useEffect(() => {
     getCounterCategory(counterId)
@@ -64,25 +76,57 @@ export default function Session() {
   useEffect(() => {
     if (COMMUNICATION_SOCKET.SOCKET) {
       setComSocHandler((payload: string) => {
-        console.log('payload', payload);
-        const type = payload.substring(0, payload.indexOf(':'));
+        const eventType = payload.substring(0, payload.indexOf(':'));
         const dataStr = payload.substring(payload.indexOf(':') + 1);
-        console.log('type', type);
-        switch (type) {
+        console.log('eventType', eventType);
+        console.log('dataStr', dataStr);
+        switch (eventType) {
           case 'StreamPort':
             createClientSocket(
               Number.parseInt(dataStr, 10),
               (data: string) => {
-                if (data[0] === '{') {
-                  const response = JSON.parse(data);
-                  setFrame(`data:image/png;base64,${response.img_src}`);
-                }
+                const response = JSON.parse(data);
+                dispatch(setShow(!!response.is_warning));
+                setFrame(`data:image/png;base64,${response.img_src}`);
               },
               () => needRetryConnect.value
             );
             break;
           case 'SessionResult':
-            setFrame(path.join(__dirname, '../resources/video.jpg'));
+            sessionDetectedResult = JSON.parse(dataStr) as SessionDetectedInfo;
+            dispatch(setSessionDetectedResult(sessionDetectedResult));
+            if (
+              sessionDetectedResult &&
+              sessionDetectedResult.periods &&
+              sessionDetectedResult.periods.length > 0
+            ) {
+              sessionEmotionInfo = sessionDetectedResult.periods.map(
+                (ps, i) =>
+                  ({
+                    emotion: i + 1,
+                    periods: ps.map(
+                      (p) =>
+                        ({
+                          duration: p.duration,
+                          periodStart: p.period_start,
+                          periodEnd: p.period_end,
+                        } as EmotionPeriodInfo)
+                    ),
+                  } as EmotionInfo)
+              );
+              endSessionInfo = {
+                emotions: sessionEmotionInfo,
+                info: JSON.stringify(sessionDetectedResult.result),
+              } as EndSessionInfo;
+              endSession(sessionId, endSessionInfo)
+                .then(() => {
+                  setFrame(path.join(__dirname, '../resources/video.jpg'));
+                  setCategoryList(null);
+                  history.goBack();
+                  dispatch(setShow(false));
+                })
+                .catch((error) => console.log(error));
+            }
             break;
           default:
             break;

@@ -4,6 +4,8 @@
   "CHECKIN": "/checkin",
   "WAITING_LIST": "/waiting-list",
   "SESSION": "/session",
+  "SESSION_HISTORY": "/session-history",
+  "SESSION_HISTORY_DETAIL": "/session-history-detail",
   "COUNTER": "/counter",
   "CAMERA": "/camera"
 }

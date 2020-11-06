@@ -56,6 +56,34 @@ const SessionPage = (props: Record<string, any>) => (
 );
 
 // Lazily load routes and code split with webpack
+const LazySessionHistoryDetailPage = React.lazy(() =>
+  import(
+    /* webpackChunkName: "SessionHistoryDetailPage" */ './containers/SessionHistoryDetailPage'
+  )
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SessionHistoryDetailPage = (props: Record<string, any>) => (
+  <React.Suspense fallback={<h1>Loading...</h1>}>
+    <LazySessionHistoryDetailPage {...props} />
+  </React.Suspense>
+);
+
+// Lazily load routes and code split with webpack
+const LazySessionHistoryPage = React.lazy(() =>
+  import(
+    /* webpackChunkName: "SessionHistoryPage" */ './containers/SessionHistoryPage'
+  )
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SessionHistoryPage = (props: Record<string, any>) => (
+  <React.Suspense fallback={<h1>Loading...</h1>}>
+    <LazySessionHistoryPage {...props} />
+  </React.Suspense>
+);
+
+// Lazily load routes and code split with webpack
 const LazyCounterPage = React.lazy(() =>
   import(/* webpackChunkName: "CounterPage" */ './containers/CounterPage')
 );
@@ -86,6 +114,11 @@ export default function Routes() {
         <Route path={routes.COUNTER} component={CounterPage} />
         <Route path={routes.CAMERA} component={CameraPage} />
         <Route path={routes.HOME} component={HomePage} />
+        <Route
+          path={routes.SESSION_HISTORY_DETAIL}
+          component={SessionHistoryDetailPage}
+        />
+        <Route path={routes.SESSION_HISTORY} component={SessionHistoryPage} />
         <Route path={routes.SESSION} component={SessionPage} />
         <Route path={routes.WAITING_LIST} component={WaitingListPage} />
         <Route path={routes.CHECKIN} component={CheckinPage} />

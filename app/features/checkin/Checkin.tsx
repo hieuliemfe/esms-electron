@@ -6,14 +6,13 @@ import { useHistory } from 'react-router-dom';
 import { ipcRenderer } from 'electron';
 import routes from '../../constants/routes.json';
 import { getShifts, checkinShift, ShiftInfo } from '../../services/shifts';
-import { ProfileInfo } from '../../services/root';
 import {
   selectUserProfile,
   setToken,
   setCounterId,
   setShiftId,
+  ProfileInfo,
 } from '../login/loginSlice';
-
 import { setToken as setRequestToken } from '../../utils/request';
 import styles from './Checkin.css';
 
@@ -35,6 +34,8 @@ export default function Checkin() {
   const history = useHistory();
   const [activeShift, setActiveShift] = useState<ShiftInfo | null>(null);
   const [shiftList, setShiftList] = useState<ShiftInfo[] | null>(null);
+
+  const viewSessionHistory = () => history.push(routes.SESSION_HISTORY);
 
   const checkin = (shiftId: number) => {
     if (activeShift) {
@@ -87,26 +88,42 @@ export default function Checkin() {
         <hr />
         <div className={styles.infoWrapper}>
           <div className={styles.infoLine}>
-            <span className={styles.infoName}>EmpCode: </span>
+            <span className={styles.infoName}>
+              <u>EmpCode</u>
+              {': '}
+            </span>
             <span className={styles.infoValue}>{profile.employeeCode}</span>
           </div>
           <div className={styles.infoLine}>
-            <span className={styles.infoName}>Email: </span>
+            <span className={styles.infoName}>
+              <u>Email</u>
+              {': '}
+            </span>
             <span className={styles.infoValue}>{profile.email}</span>
           </div>
           <div className={styles.infoLine}>
-            <span className={styles.infoName}>Phone: </span>
+            <span className={styles.infoName}>
+              <u>Phone</u>
+              {': '}
+            </span>
             <span className={styles.infoValue}>{profile.phoneNumber}</span>
           </div>
           <div className={styles.infoLine}>
-            <span className={styles.infoName}>Position: </span>
+            <span className={styles.infoName}>
+              <u>Position</u>
+              {': '}
+            </span>
             <span className={styles.infoValue}>{profile.Role.roleName}</span>
           </div>
         </div>
         <div className={styles.paddingFlex} />
         <div className={styles.btnWrapper}>
-          <button type="button" className={styles.btnAction}>
-            View Sessions Summary
+          <button
+            type="button"
+            className={styles.btnAction}
+            onClick={() => viewSessionHistory()}
+          >
+            View Session History
           </button>
           <button
             type="button"

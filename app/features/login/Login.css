@@ -65,5 +65,6 @@
 .btnLogin {
   display: block;
   margin-top: 10px;
+  padding: 5px 10px;
   cursor: pointer;
 }
