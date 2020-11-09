@@ -8,14 +8,15 @@ const angryWarningModalSlice = createSlice({
     show: false,
   },
   reducers: {
-    setShow: (state, { payload }) => {
+    setAngryWarningShow: (state, { payload }) => {
       state.show = payload;
     },
   },
 });
 
-export const { setShow } = angryWarningModalSlice.actions;
+export const { setAngryWarningShow } = angryWarningModalSlice.actions;
 
 export default angryWarningModalSlice.reducer;
 
-export const selectShow = (state: RootState) => state.angryWarningModal.show;
+export const selectAngryWarningShow = (state: RootState) =>
+  state.angryWarningModal.show;

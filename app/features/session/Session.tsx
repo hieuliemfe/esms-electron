@@ -24,7 +24,7 @@ import {
   SessionDetectedInfo,
 } from './sessionSlice';
 import { selectCounterId } from '../login/loginSlice';
-import { setShow } from '../../components/modals/angryWarningModalSlice';
+import { setAngryWarningShow } from '../../components/modals/angryWarningModalSlice';
 import {
   createClientSocket,
   setComSocHandler,
@@ -86,7 +86,7 @@ export default function Session() {
               Number.parseInt(dataStr, 10),
               (data: string) => {
                 const response = JSON.parse(data);
-                dispatch(setShow(!!response.is_warning));
+                dispatch(setAngryWarningShow(!!response.is_warning));
                 setFrame(`data:image/png;base64,${response.img_src}`);
               },
               () => needRetryConnect.value
@@ -123,7 +123,7 @@ export default function Session() {
                   setFrame(path.join(__dirname, '../resources/video.jpg'));
                   setCategoryList(null);
                   history.goBack();
-                  dispatch(setShow(false));
+                  dispatch(setAngryWarningShow(false));
                 })
                 .catch((error) => console.log(error));
             }

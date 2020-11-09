@@ -8,6 +8,7 @@ import { useHistory } from 'react-router-dom';
 import routes from '../../constants/routes.json';
 import { login, getProfile } from '../../services/root';
 import { getActiveShift } from '../../services/shifts';
+import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import {
   setToken,
   setUserProfile,
@@ -26,6 +27,7 @@ export default function Login() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     try {
+      dispatch(setLoading(true));
       const loginResponse = await login(data.empCode, data.empPass);
       if (loginResponse) {
         if (loginResponse.status) {
@@ -40,20 +42,23 @@ export default function Login() {
             if (activeShiftResponse.status) {
               const activeShift = activeShiftResponse.message;
               ipcRenderer.send('login-success');
-              if (activeShift && activeShift.length > 0) {
-                const { counterId, id: shiftId } = activeShift[0];
-                dispatch(setCounterId(counterId));
-                dispatch(setShiftId(shiftId));
-                history.push(routes.WAITING_LIST);
-              } else {
-                history.push(routes.CHECKIN);
-              }
+              // if (activeShift && activeShift.length > 0) {
+              //   const { counterId, id: shiftId } = activeShift[0];
+              //   dispatch(setCounterId(counterId));
+              //   dispatch(setShiftId(shiftId));
+              //   history.push(routes.WAITING_LIST);
+              // } else {
+              //   history.push(routes.CHECKIN);
+              // }
+              history.push(routes.HOME);
             }
           }
         }
       }
     } catch (error) {
       ipcRenderer.send('login-failed');
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 

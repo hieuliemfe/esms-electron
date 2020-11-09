@@ -2,6 +2,16 @@ import path from 'path';
 import { spawn } from 'child_process';
 import net from 'net';
 
+type CommunicationSocket = {
+  SOCKET: net.Socket | null;
+};
+
+export const COMMUNICATION_SOCKET: CommunicationSocket = {
+  SOCKET: null,
+};
+
+export const COMMUNICATION_PORT = 12345;
+
 export const createClientSocket = (
   port: number,
   dataHandler: CallableFunction,
@@ -39,14 +49,6 @@ const handleComSocData = (data: string) => {
   }
 };
 
-type CommunicationSocket = {
-  SOCKET: net.Socket | null;
-};
-
-export const COMMUNICATION_SOCKET: CommunicationSocket = {
-  SOCKET: null,
-};
-
 export default function runChildProcess() {
   const spawnChildProccess = (command: string, options: readonly string[]) => {
     const ls = spawn(command, options).on('error', (err: Error) => {
@@ -58,7 +60,7 @@ export default function runChildProcess() {
   };
 
   let childProcess = spawnChildProccess(
-    path.join(__dirname, '../venv/1/Scripts/python.exe'),
+    path.join(__dirname, '../venv/2/Scripts/python.exe'),
     [path.join(__dirname, '../detection/main.py')]
   );
 
@@ -73,7 +75,7 @@ export default function runChildProcess() {
   });
 
   COMMUNICATION_SOCKET.SOCKET = createClientSocket(
-    12345,
+    COMMUNICATION_PORT,
     handleComSocData,
     () => !childProcess.killed
   );
