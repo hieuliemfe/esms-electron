@@ -4,6 +4,7 @@ import { Switch, Route } from 'react-router-dom';
 import routes from './constants/routes.json';
 import App from './containers/App';
 import LoginPage from './containers/LoginPage';
+import LoadingPage from './containers/LoadingPage';
 
 // Lazily load routes and code split with webpack
 const LazyHomePage = React.lazy(() =>
@@ -12,7 +13,7 @@ const LazyHomePage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const HomePage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazyHomePage {...props} />
   </React.Suspense>
 );
@@ -24,7 +25,7 @@ const LazyCheckinPage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CheckinPage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazyCheckinPage {...props} />
   </React.Suspense>
 );
@@ -38,7 +39,7 @@ const LazyWaitingListPage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const WaitingListPage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazyWaitingListPage {...props} />
   </React.Suspense>
 );
@@ -50,7 +51,7 @@ const LazySessionPage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SessionPage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazySessionPage {...props} />
   </React.Suspense>
 );
@@ -64,7 +65,7 @@ const LazySessionHistoryDetailPage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SessionHistoryDetailPage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazySessionHistoryDetailPage {...props} />
   </React.Suspense>
 );
@@ -78,7 +79,7 @@ const LazySessionHistoryPage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SessionHistoryPage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazySessionHistoryPage {...props} />
   </React.Suspense>
 );
@@ -90,7 +91,7 @@ const LazyCounterPage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CounterPage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazyCounterPage {...props} />
   </React.Suspense>
 );
@@ -102,7 +103,7 @@ const LazyCameraPage = React.lazy(() =>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CameraPage = (props: Record<string, any>) => (
-  <React.Suspense fallback={<h1>Loading...</h1>}>
+  <React.Suspense fallback={<LoadingPage />}>
     <LazyCameraPage {...props} />
   </React.Suspense>
 );

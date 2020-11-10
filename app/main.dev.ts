@@ -70,7 +70,7 @@ const createMainWindow = async () => {
     height: 290,
     resizable: false,
     maximizable: false,
-    icon: getAssetPath('esms_logo.png'),
+    icon: getAssetPath('esms_logo200.png'),
     webPreferences:
       (process.env.NODE_ENV === 'development' ||
         process.env.E2E_BUILD === 'true') &&

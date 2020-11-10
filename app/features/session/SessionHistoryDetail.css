@@ -106,7 +106,7 @@ span.infoName {
 }
 
 .title span {
-  color: #42526e;
+  color: #1479ff;
 }
 
 .title span::after {
@@ -118,14 +118,14 @@ span.infoName {
   margin-top: 50px;
   max-height: calc(100vh - 150px);
   overflow: auto;
-  border: 1px solid #42526e;
+  border: 1px solid #1479ff;
 }
 
 .sessionCard {
   display: block;
   width: 800px;
   padding: 20px 30px;
-  border-bottom: 1px solid #42526e;
+  border-bottom: 1px solid #1479ff;
   cursor: pointer;
 }
 

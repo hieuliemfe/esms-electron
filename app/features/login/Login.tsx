@@ -7,7 +7,6 @@ import { ipcRenderer } from 'electron';
 import { useHistory } from 'react-router-dom';
 import routes from '../../constants/routes.json';
 import { login, getProfile } from '../../services/root';
-import { getActiveShift } from '../../services/shifts';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import {
   setToken,
@@ -22,7 +21,7 @@ export default function Login() {
   const dispatch = useDispatch();
   const { register, handleSubmit } = useForm();
   const history = useHistory();
-  const [logo] = useState(path.join(__dirname, '../resources/esms_logo.png'));
+  const logo = path.join(__dirname, '../resources/esms_logo300.png');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
@@ -36,22 +35,9 @@ export default function Login() {
 
           const profileResponse = await getProfile();
           if (profileResponse.status) {
+            ipcRenderer.send('login-success');
             dispatch(setUserProfile(profileResponse.message));
-
-            const activeShiftResponse = await getActiveShift();
-            if (activeShiftResponse.status) {
-              const activeShift = activeShiftResponse.message;
-              ipcRenderer.send('login-success');
-              // if (activeShift && activeShift.length > 0) {
-              //   const { counterId, id: shiftId } = activeShift[0];
-              //   dispatch(setCounterId(counterId));
-              //   dispatch(setShiftId(shiftId));
-              //   history.push(routes.WAITING_LIST);
-              // } else {
-              //   history.push(routes.CHECKIN);
-              // }
-              history.push(routes.HOME);
-            }
+            history.push(routes.HOME);
           }
         }
       }

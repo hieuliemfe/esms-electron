@@ -106,7 +106,7 @@ span.infoName {
 }
 
 .title span {
-  color: #42526e;
+  color: #1479ff;
 }
 
 .title span::after {
@@ -122,16 +122,16 @@ span.infoName {
 
 .shiftListWrapper {
   display: block;
-  border-top: 1px solid #42526e;
-  border-left: 1px solid #42526e;
-  border-right: 1px solid #42526e;
+  border-top: 1px solid #1479ff;
+  border-left: 1px solid #1479ff;
+  border-right: 1px solid #1479ff;
 }
 
 .shiftCard {
   display: block;
   width: 600px;
   padding: 20px 30px;
-  border-bottom: 1px solid #42526e;
+  border-bottom: 1px solid #1479ff;
 }
 
 .shiftCard button {

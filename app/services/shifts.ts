@@ -9,6 +9,7 @@ export type ShiftInfo = {
   shiftEnd: string;
   statusId: number;
   shiftTypeId: number;
+  isToCheckin?: boolean;
 };
 
 type ShiftResponse = EsmsResponse<ShiftInfo[]>;
