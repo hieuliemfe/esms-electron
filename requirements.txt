@@ -5,3 +5,4 @@ pyinstaller==4.0
 gcloud==0.18.3
 httplib2==0.15.0
 imutils==0.5.3
+moviepy==1.0.3

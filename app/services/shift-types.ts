@@ -1,12 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import request, { EsmsResponse } from '../utils/request';
+// eslint-disable-next-line import/no-cycle
+import { ShiftInfo } from './shifts';
 
 export type ShiftTypeInfo = {
   id: number;
   name: string;
   shiftStart: string;
   shiftEnd: string;
-  isOverTime?: boolean;
+  isActive?: boolean;
+  isAvailable?: boolean;
+  isToCheckIn?: boolean;
+  ShiftToCheckIn?: ShiftInfo;
 };
 
 type ShiftTypeResponse = EsmsResponse<ShiftTypeInfo[]>;

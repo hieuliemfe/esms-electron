@@ -245,6 +245,7 @@
   display: flex;
   height: 100%;
   align-items: center;
+  position: relative;
 }
 
 .startTime::after {
@@ -257,6 +258,29 @@
   padding-left: 10px;
 }
 
+.shiftBtn {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  padding: 5px;
+  text-align: center;
+  border-radius: 5px;
+  background-color: #1479ff;
+  color: #fff;
+  cursor: pointer;
+  display: none;
+}
+
+.shiftBtn:hover {
+  -webkit-box-shadow: 0 0 10px 0 rgba(20, 121, 255, 0.2);
+  -moz-box-shadow: 0 0 10px 0 rgba(20, 121, 255, 0.2);
+  box-shadow: 0 0 10px 0 rgba(20, 121, 255, 0.2);
+}
+
+.shiftItem:hover .shiftBtn {
+  display: block;
+}
+
 .shiftSeparator {
   width: 50%;
   height: 1px;
@@ -267,7 +291,7 @@
 .btnEndShift {
   display: flex;
   width: 100%;
-  padding: 12px 14px;
+  padding: 10px 12px;
   margin: 16px 0;
   justify-content: center;
   align-items: center;
@@ -296,18 +320,31 @@
   display: flex;
   width: 100%;
   height: 220px;
-  position: relative;
   margin-bottom: 20px;
 }
 
 .firstPart {
-  position: absolute;
-  top: 0;
-  right: 0;
   display: flex;
   width: 100%;
   height: 100%;
   transition: all 0.1s ease-in-out;
+}
+
+.secondPart {
+  display: flex;
+  flex: auto;
+  width: 0;
+  height: 100%;
+  transition: all 0.1s ease-in-out;
+}
+
+.overflowHidden {
+  overflow: hidden;
+}
+
+.headerWrapper.isCheckedIn .firstPart {
+  width: 0;
+  overflow: hidden;
 }
 
 .calendarWrapper {
@@ -375,7 +412,115 @@ span.tips {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  transition: all 0.1s ease-in-out;
+  padding: 30px 30px 0;
+  background-color: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  -webkit-box-shadow: 0 0 16px 0 rgba(20, 121, 255, 0.2);
+  -moz-box-shadow: 0 0 16px 0 rgba(20, 121, 255, 0.2);
+  box-shadow: 0 0 16px 0 rgba(20, 121, 255, 0.2);
+}
+
+span.waitingListTitle {
+  display: block;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.waitingList {
+  height: 100%;
+  overflow-x: auto;
+}
+
+.waitingInner {
+  display: block;
+  padding: 20px;
+  flex: auto;
+  height: 100%;
+}
+
+.waitingInner::after {
+  display: block;
+  content: '';
+  clear: both;
+}
+
+.waitingItem {
+  float: left;
+  display: flex;
+  flex-direction: column;
+  width: 150px;
+  height: 100%;
+  margin-right: 30px;
+  background-color: #fff;
+  border: 2px solid #f3f8ff;
+  border-radius: 15px;
+  -webkit-box-shadow: 0 0 16px 0 rgba(20, 121, 255, 0.2);
+  -moz-box-shadow: 0 0 16px 0 rgba(20, 121, 255, 0.2);
+  box-shadow: 0 0 16px 0 rgba(20, 121, 255, 0.2);
+}
+
+.waitingItem:hover {
+  border: 2px solid #1479ff;
+}
+
+.waitingItemHead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  background-color: #f3f8ff;
+  overflow: hidden;
+  color: #1479ff;
+  font-size: 20px;
+  position: relative;
+}
+
+.startSessionBtn {
+  position: absolute;
+  justify-content: center;
+  align-items: center;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  background-color: #1479ff;
+  color: #fff;
+  cursor: pointer;
+  display: none;
+  font-size: 16px;
+}
+
+.startSessionBtn:hover {
+  -webkit-box-shadow: 0 0 10px 0 rgba(20, 121, 255, 0.2);
+  -moz-box-shadow: 0 0 10px 0 rgba(20, 121, 255, 0.2);
+  box-shadow: 0 0 10px 0 rgba(20, 121, 255, 0.2);
+}
+
+.waitingItem:hover .startSessionBtn {
+  display: flex;
+}
+
+.waitingItemTail {
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 0 10px;
+}
+
+.wNo {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.wCat {
+  color: #999;
+  text-align: center;
 }
 
 .footerWrapper {

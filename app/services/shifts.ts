@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import request, { EsmsResponse } from '../utils/request';
+// eslint-disable-next-line import/no-cycle
 import { ShiftTypeInfo } from './shift-types';
 
 export type ShiftInfo = {
@@ -12,7 +13,12 @@ export type ShiftInfo = {
   isToCheckin?: boolean;
 };
 
-type ShiftResponse = EsmsResponse<ShiftInfo[]>;
+type ShiftList = {
+  activeShifts: ShiftInfo[];
+  upcomingShifts: ShiftInfo[];
+};
+
+type ShiftResponse = EsmsResponse<ShiftList>;
 
 export async function getShifts(): Promise<ShiftResponse> {
   return request.get('/shifts') as Promise<ShiftResponse>;
