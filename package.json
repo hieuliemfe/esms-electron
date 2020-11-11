@@ -255,6 +255,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.1",
+    "@google-cloud/storage": "^5.5.0",
     "@hot-loader/react-dom": "^16.13.0",
     "@reduxjs/toolkit": "^1.4.0",
     "connected-react-router": "^6.6.1",

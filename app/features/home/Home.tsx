@@ -1,18 +1,17 @@
+/* eslint-disable promise/no-nesting */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable promise/always-return */
 import React, { useState, useEffect } from 'react';
+import path from 'path';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { ipcRenderer } from 'electron';
 import routes from '../../constants/routes.json';
-import {
-  getShifts,
-  getActiveShift,
-  checkinShift,
-  ShiftInfo,
-} from '../../services/shifts';
+import { getShifts, checkinShift, ShiftInfo } from '../../services/shifts';
+import { getShiftTypes, ShiftTypeInfo } from '../../services/shift-types';
+import { selectEviUrls, EvidenceUrl } from './homeSlice';
 import {
   selectUserProfile,
   setToken,
@@ -35,12 +34,21 @@ const formatDate = (dateStr: string | undefined) => {
   )}`;
 };
 
+const calculateOverTime = (endTime: string) => {
+  return (
+    new Date(`${new Date().toJSON().split('T')[0]}T${endTime}`).getTime() >
+    Date.now()
+  );
+};
+
 export default function Home() {
   const dispatch = useDispatch();
   const profile: ProfileInfo = useSelector(selectUserProfile) as ProfileInfo;
+  const eviUrls: EvidenceUrl[] = useSelector(selectEviUrls) as EvidenceUrl[];
   const history = useHistory();
+  const logo = path.join(__dirname, '../resources/esms_logo200.png');
   const [isShowShiftList, setShowShiftList] = useState(true);
-  const [shiftList, setShiftList] = useState<ShiftInfo[] | null>(null);
+  const [shiftList, setShiftList] = useState<ShiftTypeInfo[] | null>(null);
 
   const viewSessionHistory = () => history.push(routes.SESSION_HISTORY);
 
@@ -52,7 +60,7 @@ export default function Home() {
           dispatch(setCounterId(counterId));
           dispatch(setShiftId(shiftId));
         })
-        .catch((error) => console.log(error));
+        .catch(console.log);
     }
   };
 
@@ -68,17 +76,31 @@ export default function Home() {
   };
 
   useEffect(() => {
-    getActiveShift()
-      .then((activeShiftResponse) => {
-        if (activeShiftResponse.status) {
-          const activeShifts = activeShiftResponse.message;
-          if (activeShifts && activeShifts.length > 0) {
-            const activeShift = activeShifts[0];
-            checkin(activeShift);
+    getShiftTypes()
+      .then((shiftTypeResponse) => {
+        if (shiftTypeResponse.status) {
+          const shiftTypes = shiftTypeResponse.message;
+          if (shiftTypes && shiftTypes.length > 0) {
+            const filteredShiftTypes = shiftTypes.map((e) => ({
+              ...e,
+              isOverTime: calculateOverTime(e.shiftEnd),
+            }));
+            // getActiveShift()
+            //   .then((activeShiftResponse) => {
+            //     if (activeShiftResponse.status) {
+            //       const activeShifts = activeShiftResponse.message;
+            //       if (activeShifts && activeShifts.length > 0) {
+            //         const activeShift = activeShifts[0];
+            //         checkin(activeShift);
+            //       }
+            //     }
+            //   })
+            //   .catch(console.log);
+            setShiftList(filteredShiftTypes);
           }
         }
       })
-      .catch((error) => console.log(error));
+      .catch(console.log);
   }, []);
 
   return (
@@ -87,7 +109,7 @@ export default function Home() {
         <span className={styles.appName}>EsmsApp</span>
         <div className={styles.navigation}>
           <div
-            className={`${styles.btnNav} ${styles.active} ${styles.noPointer}`}
+            className={`${styles.btnNav} ${styles.active} ${styles.noHover}`}
           >
             <div className={styles.iconBox}>
               <i className="fa fa-home" />
@@ -132,71 +154,55 @@ export default function Home() {
         <div className={styles.shiftListInner}>
           <span className={styles.shiftListTitle}>Today shifts</span>
           <div className={styles.shiftList}>
-            <div className={`${styles.shiftItem} ${styles.unavailable}`}>
-              <div className={styles.shiftHead}>
-                <i className="far fa-clock" />
-                <span className={styles.shiftName}>Shift S01</span>
-              </div>
-              <div className={styles.shiftTail}>
-                <span className={styles.startTime}>00:00 AM</span>
-                <span className={styles.endTime}>04:00 AM</span>
-              </div>
-            </div>
-            <div className={`${styles.shiftItem} ${styles.unavailable}`}>
-              <div className={styles.shiftHead}>
-                <i className="far fa-clock" />
-                <span className={styles.shiftName}>Shift S02</span>
-              </div>
-              <div className={styles.shiftTail}>
-                <span className={styles.startTime}>04:00 AM</span>
-                <span className={styles.endTime}>08:00 AM</span>
-              </div>
-            </div>
-            <div className={`${styles.shiftItem} ${styles.active}`}>
-              <div className={styles.shiftHead}>
-                <i className="far fa-clock" />
-                <span className={styles.shiftName}>Shift S03</span>
-              </div>
-              <div className={styles.shiftTail}>
-                <span className={styles.startTime}>08:00 AM</span>
-                <span className={styles.endTime}>12:00 PM</span>
-              </div>
-            </div>
-            <div className={styles.shiftItem}>
-              <div className={styles.shiftHead}>
-                <i className="far fa-clock" />
-                <span className={styles.shiftName}>Shift S04</span>
-              </div>
-              <div className={styles.shiftTail}>
-                <span className={styles.startTime}>12:00 PM</span>
-                <span className={styles.endTime}>04:00 PM</span>
-              </div>
-            </div>
-            <div className={`${styles.shiftItem} ${styles.available}`}>
-              <div className={styles.shiftHead}>
-                <i className="far fa-clock" />
-                <span className={styles.shiftName}>Shift S05</span>
-              </div>
-              <div className={styles.shiftTail}>
-                <span className={styles.startTime}>04:00 PM</span>
-                <span className={styles.endTime}>08:00 PM</span>
-              </div>
-            </div>
-            <div className={styles.shiftItem}>
-              <div className={styles.shiftHead}>
-                <i className="far fa-clock" />
-                <span className={styles.shiftName}>Shift S06</span>
-              </div>
-              <div className={styles.shiftTail}>
-                <span className={styles.startTime}>08:00 PM</span>
-                <span className={styles.endTime}>00:00 AM</span>
-              </div>
-            </div>
+            {shiftList && shiftList.length > 0 ? (
+              shiftList.map((shiftType: ShiftTypeInfo) => (
+                <div className={`${styles.shiftItem}`} key={shiftType.id}>
+                  <div className={styles.shiftHead}>
+                    <i className="far fa-clock" />
+                    <span className={styles.shiftName}>{shiftType.name}</span>
+                  </div>
+                  <div className={styles.shiftTail}>
+                    <span className={styles.startTime}>
+                      {shiftType.shiftStart}
+                    </span>
+                    <span className={styles.endTime}>{shiftType.shiftEnd}</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <></>
+            )}
           </div>
-          <div className="" />
+          <div className={styles.shiftSeparator} />
+          <div className={styles.btnEndShift}>
+            <span>End your shift</span>
+          </div>
         </div>
       </div>
-      <div className={styles.mainContent}>ABC</div>
+      <div className={styles.mainContent}>
+        <div className={styles.headerWrapper}>
+          <div className={styles.firstPart}>
+            <div className={styles.calendarWrapper}>
+              <span className={styles.calendarTitle}>Nov, 2020</span>
+            </div>
+            <div className={styles.greetingWrapper}>
+              <div className={styles.welcomeWrapper}>
+                <span className={styles.hello}>
+                  {`Hello, ${profile.fullname}!`}
+                </span>
+                <span className={styles.tips}>Have a nice day!</span>
+                <span className={styles.tips}>
+                  Please check in your shift to start working!
+                </span>
+              </div>
+              <img src={logo} alt="ESMSLogo" className={styles.greetingLogo} />
+            </div>
+          </div>
+        </div>
+        <div className={styles.footerWrapper}>
+          <span className={styles.footerTitle}>Session History</span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+/* eslint-disable promise/always-return */
 /* eslint global-require: off, no-console: off */
 
 /**
@@ -11,9 +12,17 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, ipcMain, dialog, BrowserWindow, Menu } from 'electron';
+import {
+  app,
+  ipcMain,
+  dialog,
+  BrowserWindow,
+  Menu,
+  IpcMainEvent,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import { generateV4ReadSignedUrl } from './services/google-cloud';
 // import MenuBuilder from './menu';
 
 export default class AppUpdater {
@@ -134,6 +143,19 @@ ipcMain.on('login-failed', () => {
 ipcMain.on('login-success', () => {
   if (mainWindow) {
     mainWindow.maximize();
+  }
+});
+
+ipcMain.on('sign-url-for-path', (event: IpcMainEvent, filePath: string) => {
+  if (event && filePath) {
+    generateV4ReadSignedUrl(filePath)
+      .then((url: string) => {
+        const result = {
+          [filePath]: url,
+        };
+        event.sender.send('signed-url', result);
+      })
+      .catch(console.log);
   }
 });
 

@@ -159,11 +159,11 @@ export default function Checkin() {
               <div className={styles.shiftTimeWrapper}>
                 <span className={styles.shiftTime}>
                   Start:
-                  {formatDate(activeShift.shiftStart)}
+                  {formatDate(activeShift.shiftDate)}
                 </span>
                 <span className={styles.shiftTime}>
                   End:
-                  {formatDate(activeShift.shiftEnd)}
+                  {formatDate(activeShift.shiftDate)}
                 </span>
               </div>
             </div>
@@ -189,11 +189,11 @@ export default function Checkin() {
                   <div className={styles.shiftTimeWrapper}>
                     <span className={styles.shiftTime}>
                       Start:
-                      {formatDate(shift.shiftStart)}
+                      {formatDate(shift.shiftDate)}
                     </span>
                     <span className={styles.shiftTime}>
                       End:
-                      {formatDate(shift.shiftEnd)}
+                      {formatDate(shift.shiftDate)}
                     </span>
                   </div>
                 </div>

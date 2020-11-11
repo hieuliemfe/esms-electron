@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import request, { EsmsResponse } from '../utils/request';
+import { ShiftTypeInfo } from './shift-types';
 
 export type ShiftInfo = {
   id: number;
   employeeId: string;
   counterId: number;
-  shiftStart: string;
-  shiftEnd: string;
+  shiftDate: string;
   statusId: number;
-  shiftTypeId: number;
+  ShiftType: ShiftTypeInfo;
   isToCheckin?: boolean;
 };
 

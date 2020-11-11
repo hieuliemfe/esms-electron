@@ -4,15 +4,18 @@ import { AppContainer as ReactHotAppContainer } from 'react-hot-loader';
 import { ipcRenderer } from 'electron';
 import { history, configuredStore } from './store';
 import runChildProcess from './socket.dev';
+import { addEviUrl } from './features/home/homeSlice';
 import './app.global.css';
 
 runChildProcess();
 
-ipcRenderer.on('close-prevented', (ev) => {
-  console.log('ipcRenderer close-prevented event', ev);
-});
-
 const store = configuredStore();
+
+ipcRenderer.on('signed-url', (event, result) => {
+  if (event && result) {
+    store.dispatch(addEviUrl(result));
+  }
+});
 
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer;
 
