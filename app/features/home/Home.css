@@ -642,7 +642,7 @@ span.resultTextItem span {
   float: left;
   display: flex;
   flex-direction: column;
-  width: 150px;
+  width: 200px;
   height: 100%;
   margin-right: 30px;
   background-color: #fff;

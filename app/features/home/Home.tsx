@@ -466,7 +466,7 @@ export default function Home() {
                   {sessionList && sessionList.length > 0 ? (
                     <div
                       className={styles.sessionInner}
-                      style={{ width: 40 + 180 * sessionList.length }}
+                      style={{ width: 40 + 230 * sessionList.length }}
                     >
                       {sessionList.map((session: SessionInfo) => (
                         <div className={styles.sessionItem} key={session.id}>

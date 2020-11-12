@@ -155,14 +155,14 @@ span.formTitle {
   display: block;
   font-weight: bold;
   font-size: 20px;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 }
 
 span.formSubtitle {
   display: block;
   font-size: 14px;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin: 30px 0 10px;
   color: #333;
   font-style: italic;
   text-decoration: underline;
@@ -191,8 +191,13 @@ span.formSubtitle {
   width: 100%;
 }
 
+textarea {
+  resize: none;
+}
+
 .btnDone {
   display: block;
+  float: right;
   margin-top: 10px;
   padding: 5px 10px;
   cursor: pointer;

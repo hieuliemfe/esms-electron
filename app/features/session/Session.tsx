@@ -301,7 +301,10 @@ export default function Session() {
                     />
                   </div>
                   <div className={styles.fieldWrapper}>
-                    <span className={styles.fieldLabel}>Account Number</span>
+                    <span className={styles.fieldLabel}>
+                      Account Number
+                      <span className={styles.required}>*</span>
+                    </span>
                     <input
                       ref={register({ required: true })}
                       type="text"
@@ -310,12 +313,106 @@ export default function Session() {
                     />
                   </div>
                 </div>
-                <div className={styles.fieldWrapper}>
-                  <input
-                    type="submit"
-                    className={styles.btnDone}
-                    value="SUBMIT"
-                  />
+                <span className={styles.formSubtitle}>
+                  Receiver information
+                </span>
+                <div className={styles.lineWrapper}>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      Inter-bank
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="interbank"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      Province/City
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="proci"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+                <div className={styles.lineWrapper}>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      Receiver Name
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="recname"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      Account Number
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="recacc"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+                <div className={styles.lineWrapper}>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>Phone</span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="recphone"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      Amount (VND)
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="amount"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+                <div className={styles.lineWrapper}>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      Remark
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <textarea
+                      ref={register({ required: true })}
+                      rows={5}
+                      name="remark"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+                <div className={styles.lineWrapper}>
+                  <div className={styles.fieldWrapper}>
+                    <input
+                      type="submit"
+                      className={styles.btnDone}
+                      value="SUBMIT"
+                    />
+                  </div>
                 </div>
               </form>
             </>
