@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import path from 'path';
+import { spawn } from 'child_process';
 import {
   startSession,
   endSession,
@@ -29,6 +30,8 @@ import {
   createClientSocket,
   setComSocHandler,
   COMMUNICATION_SOCKET,
+  DETECTION_PATH,
+  PYTHON_VENV_PATH,
 } from '../../socket.dev';
 import styles from './Session.css';
 
@@ -46,6 +49,11 @@ export default function Session() {
   const [needRetryConnect] = useState({ value: true });
   const [start, setStart] = useState(false);
   const [kill, setKill] = useState(false);
+  const evidenceFoldername = `session_${fourDigits(sessionId)}/`;
+  const evidenceFolder = path.join(
+    __dirname,
+    `../evidences/${evidenceFoldername}`
+  );
   let sessionDetectedResult: SessionDetectedInfo;
   let sessionEmotionInfo: EmotionInfo[] = [];
   let endSessionInfo: EndSessionInfo;
@@ -122,6 +130,21 @@ export default function Session() {
                 .then(() => {
                   setFrame(path.join(__dirname, '../resources/video.jpg'));
                   setCategoryList(null);
+                  spawn(PYTHON_VENV_PATH, [
+                    path.join(DETECTION_PATH, 'upload.py'),
+                    '--fr',
+                    evidenceFolder.replace(/\\/g, '/'),
+                    '--to',
+                    evidenceFoldername,
+                  ])
+                    .on('error', (err: Error) => {
+                      console.error(
+                        '[UPLOADER] Child process spawning error:',
+                        err
+                      );
+                    })
+                    .unref();
+
                   history.goBack();
                   dispatch(setAngryWarningShow(false));
                 })
@@ -133,10 +156,6 @@ export default function Session() {
         }
       });
       if (!start && !kill) {
-        const evidenceFolder = path.join(
-          __dirname,
-          `../evidences/session_${fourDigits(sessionId)}/`
-        );
         COMMUNICATION_SOCKET.SOCKET.write(`start:${evidenceFolder}`);
         setStart(true);
       }
@@ -210,7 +229,7 @@ export default function Session() {
             </div>
           </div>
         </div>
-        <div className={styles.contentWrapper}>Xyz</div>
+        <div className={styles.contentWrapper} />
       </div>
     </div>
   );

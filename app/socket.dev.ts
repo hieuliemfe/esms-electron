@@ -2,6 +2,13 @@ import path from 'path';
 import { spawn } from 'child_process';
 import net from 'net';
 
+export const PYTHON_VENV_PATH = path.join(
+  __dirname,
+  '../venv/1/Scripts/python.exe'
+);
+
+export const DETECTION_PATH = path.join(__dirname, '../detection/');
+
 type CommunicationSocket = {
   SOCKET: net.Socket | null;
 };
@@ -51,18 +58,17 @@ const handleComSocData = (data: string) => {
 
 export default function runChildProcess() {
   const spawnChildProccess = (command: string, options: readonly string[]) => {
-    const ls = spawn(command, options).on('error', (err: Error) => {
+    const childPro = spawn(command, options).on('error', (err: Error) => {
       console.error('Child process spawning error:', err);
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       childProcess = spawnChildProccess(command, options);
     });
-    return ls;
+    return childPro;
   };
 
-  let childProcess = spawnChildProccess(
-    path.join(__dirname, '../venv/2/Scripts/python.exe'),
-    [path.join(__dirname, '../detection/main.py')]
-  );
+  let childProcess = spawnChildProccess(PYTHON_VENV_PATH, [
+    path.join(DETECTION_PATH, 'main.py'),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   childProcess.stdout.on('data', (chunk: any) => {

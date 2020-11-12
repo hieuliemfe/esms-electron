@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable promise/no-nesting */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -6,6 +7,7 @@
 /* eslint-disable promise/always-return */
 import React, { useState, useEffect } from 'react';
 import path from 'path';
+import fs from 'fs';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { ipcRenderer } from 'electron';
@@ -18,8 +20,21 @@ import {
 } from '../../services/shifts';
 import { getShiftTypes, ShiftTypeInfo } from '../../services/shift-types';
 import { getQueues, assignQueue, QueueInfo } from '../../services/queues';
-import { createSession } from '../../services/sessions';
-import { selectEviUrls, EvidenceUrl } from './homeSlice';
+import {
+  createSession,
+  getSessionSummary,
+  SessionSummaryResult,
+  SessionSummaryInfo,
+  SessionInfo,
+} from '../../services/sessions';
+import {
+  selectEviUrls,
+  selectIsShowShiftList,
+  selectIsCheckedIn,
+  setShowShiftList,
+  setCheckedIn,
+  EvidenceUrl,
+} from './homeSlice';
 import {
   selectUserProfile,
   selectCounterId,
@@ -33,21 +48,54 @@ import { setSessionId } from '../session/sessionSlice';
 import { setToken as setRequestToken } from '../../utils/request';
 import styles from './Home.css';
 
-const twoDigits = (num: number | string) => `${`0${num}`.substr(-2)}`;
 const fourDigits = (num: number | string) => `${`000${num}`.substr(-4)}`;
+
+const getLocalVideoPath = (sessionId: number) =>
+  path.join(
+    __dirname,
+    `../evidences/session_${fourDigits(sessionId)}/video.mp4`
+  );
+
+const localFileExist = (pathToFile: string) => fs.existsSync(pathToFile);
 
 export default function Home() {
   const dispatch = useDispatch();
   const profile: ProfileInfo = useSelector(selectUserProfile) as ProfileInfo;
-  const eviUrls: EvidenceUrl[] = useSelector(selectEviUrls) as EvidenceUrl[];
+  const eviUrls: EvidenceUrl = useSelector(selectEviUrls) as EvidenceUrl;
   const history = useHistory();
   const logo = path.join(__dirname, '../resources/esms_logo200.png');
-  const [isShowShiftList, setShowShiftList] = useState(true);
-  const [isCheckedIn, setCheckedIn] = useState(false);
+  const isShowShiftList = useSelector(selectIsShowShiftList);
+  const isCheckedIn = useSelector(selectIsCheckedIn);
   const shiftId = useSelector(selectShiftId);
   const counterId = useSelector(selectCounterId);
   const [shiftList, setShiftList] = useState<ShiftTypeInfo[] | null>(null);
   const [queueList, setQueueList] = useState<QueueInfo[] | null>(null);
+  const [isShowEvi, setShowEvi] = useState(false);
+  const [videoEviPath, setVideoEviPath] = useState<string | null>(null);
+  const [videoEviName, setVideoEviName] = useState<string | null>(null);
+  const [
+    sessionSummary,
+    setSessionSummary,
+  ] = useState<SessionSummaryInfo | null>(null);
+  const [sessionList, setSessionList] = useState<SessionInfo[] | null>(null);
+
+  const showEvi = (sessionId: number) => {
+    console.log('hello evi', sessionId);
+    setShowEvi(false);
+    setVideoEviName(null);
+    setVideoEviPath(null);
+    const localVideoPath = getLocalVideoPath(sessionId);
+    if (localFileExist(localVideoPath)) {
+      setVideoEviName(null);
+      setVideoEviPath(localVideoPath);
+    } else {
+      setVideoEviPath(null);
+      const veName = `session_${fourDigits(sessionId)}/video.mp4`;
+      ipcRenderer.send('sign-url-for-path', veName);
+      setVideoEviName(veName);
+    }
+    setShowEvi(true);
+  };
 
   const startSession = (queueId: number) => {
     assignQueue(counterId, queueId)
@@ -55,8 +103,8 @@ export default function Home() {
         if (assignResponse.status) {
           const createSessionResponse = await createSession();
           if (createSessionResponse.status) {
-            const shiftInfo = createSessionResponse.message;
-            dispatch(setSessionId(shiftInfo.id));
+            const sessionInfo = createSessionResponse.message;
+            dispatch(setSessionId(sessionInfo.id));
             history.push(routes.SESSION);
           }
         }
@@ -72,9 +120,9 @@ export default function Home() {
           dispatch(setCounterId(ctId));
           dispatch(setShiftId(shId));
           if (!isCheckedIn) {
-            setCheckedIn(true);
+            dispatch(setCheckedIn(true));
           }
-          setShowShiftList(false);
+          dispatch(setShowShiftList(false));
         })
         .catch(console.log);
     }
@@ -85,17 +133,19 @@ export default function Home() {
       .then(() => {
         dispatch(setCounterId(0));
         dispatch(setShiftId(0));
-        setCheckedIn(false);
+        dispatch(setCheckedIn(false));
       })
       .catch((error) => console.log(error));
   };
 
   const toggleShowShiftList = () => {
-    setShowShiftList(!isShowShiftList);
+    dispatch(setShowShiftList(!isShowShiftList));
   };
 
   const logout = () => {
     setRequestToken(null);
+    dispatch(setCounterId(0));
+    dispatch(setShiftId(0));
     dispatch(setToken(''));
     ipcRenderer.send('logout');
     history.push('/');
@@ -145,6 +195,18 @@ export default function Home() {
                 }
               })
               .catch(console.log);
+          }
+        }
+      })
+      .catch(console.log);
+
+    getSessionSummary(profile.employeeCode)
+      .then((sessionSummaryResponse) => {
+        if (sessionSummaryResponse.status) {
+          const result: SessionSummaryResult = sessionSummaryResponse.message;
+          if (result) {
+            setSessionSummary(result.sumary);
+            setSessionList(result.sessions);
           }
         }
       })
@@ -253,7 +315,7 @@ export default function Home() {
             <>
               <div className={styles.shiftSeparator} />
               <div className={styles.btnEndShift} onClick={() => checkout()}>
-                <span>End your shift</span>
+                <span>Check Out Shift</span>
               </div>
             </>
           ) : (
@@ -268,9 +330,9 @@ export default function Home() {
           }`}
         >
           <div className={styles.firstPart}>
-            <div className={styles.calendarWrapper}>
+            {/* <div className={styles.calendarWrapper}>
               <span className={styles.calendarTitle}>Nov, 2020</span>
-            </div>
+            </div> */}
             <div className={styles.greetingWrapper}>
               <div className={styles.welcomeWrapper}>
                 <span className={styles.hello}>
@@ -329,7 +391,74 @@ export default function Home() {
           </div>
         </div>
         <div className={styles.footerWrapper}>
-          <span className={styles.footerTitle}>Session History</span>
+          <div className={styles.footerInner}>
+            <div className={styles.resultWrapper}>
+              <div className={styles.resultTextWrapper}>
+                <span className={styles.footerTitle}>Session History</span>
+                <span className={styles.resultTextItem}>
+                  {`Total Sessions Count: `}
+                  <span>{sessionSummary?.totalSessions}</span>
+                </span>
+                <span className={styles.resultTextItem}>
+                  {`Total Angry Warnings Count: `}
+                  <span>{sessionSummary?.angryWarningCount}</span>
+                </span>
+              </div>
+              <div
+                className={`${styles.videoWrapper} ${
+                  isShowEvi ? styles.show : ''
+                }`}
+              >
+                {videoEviPath ? (
+                  <video controls autoPlay>
+                    <source src={videoEviPath} type="video/mp4" />
+                    No video found
+                  </video>
+                ) : videoEviName ? (
+                  <video controls autoPlay>
+                    <source src={eviUrls[videoEviName]} type="video/mp4" />
+                    No video found
+                  </video>
+                ) : (
+                  <></>
+                )}
+              </div>
+            </div>
+            <div className={styles.sessionList}>
+              {sessionList && sessionList.length > 0 ? (
+                <div
+                  className={styles.sessionInner}
+                  style={{ width: 40 + 180 * sessionList.length }}
+                >
+                  {sessionList.map((session: SessionInfo) => (
+                    <div className={styles.sessionItem} key={session.id}>
+                      <div
+                        className={styles.sessionItemHead}
+                        onClick={() => showEvi(session.id)}
+                      >
+                        <i className="far fa-clock" />
+                        <div className={styles.viewEviBtn}>Show Evidence</div>
+                      </div>
+                      <div className={styles.sessionItemTail}>
+                        <span className={styles.sname}>
+                          {`session_${fourDigits(session.id)}`}
+                        </span>
+                        <span />
+                        <span className={styles.stime}>
+                          {`Duration: ${session.sessionDuration}`}
+                        </span>
+                        <span className={styles.stime}>
+                          {`Angry Warnings: ${session.angryWarningCount}`}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <></>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
