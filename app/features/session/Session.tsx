@@ -11,6 +11,7 @@ import { useHistory } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import path from 'path';
 import { spawn } from 'child_process';
+import routes from '../../constants/routes.json';
 import {
   startSession,
   endSession,
@@ -61,7 +62,7 @@ export default function Session() {
   );
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [isShowForm, setShowForm] = useState(false);
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset } = useForm();
   let sessionDetectedResult: SessionDetectedInfo;
   let sessionEmotionInfo: EmotionInfo[] = [];
   let endSessionInfo: EndSessionInfo;
@@ -76,6 +77,7 @@ export default function Session() {
     await new Promise(() => {
       setTimeout(() => {
         dispatch(setLoading(false));
+        reset();
       }, 1000);
     });
   };
@@ -167,7 +169,7 @@ export default function Session() {
                     })
                     .unref();
 
-                  history.goBack();
+                  history.push(routes.HOME);
                   dispatch(setAngryWarningShow(false));
                 })
                 .catch((error) => console.log(error));
