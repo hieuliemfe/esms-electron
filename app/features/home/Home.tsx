@@ -177,6 +177,31 @@ export default function Home() {
   };
 
   useEffect(() => {
+    getSessionSummary(profile.employeeCode)
+      .then((sessionSummaryResponse) => {
+        if (sessionSummaryResponse.status) {
+          const result: SessionSummaryResult = sessionSummaryResponse.message;
+          if (result) {
+            setSessionSummary(result.sumary);
+            setSessionList(result.sessions);
+          }
+        }
+      })
+      .catch(console.log);
+
+    if (isCheckedIn) {
+      getQueues()
+        .then((queueResponse) => {
+          if (queueResponse.status) {
+            const data = queueResponse.message;
+            setQueueList(data);
+          }
+        })
+        .catch((error) => console.log(error));
+    }
+  });
+
+  useEffect(() => {
     getShiftTypes()
       .then((shiftTypeResponse) => {
         if (shiftTypeResponse.status) {
@@ -224,29 +249,6 @@ export default function Home() {
         }
       })
       .catch(console.log);
-
-    getSessionSummary(profile.employeeCode)
-      .then((sessionSummaryResponse) => {
-        if (sessionSummaryResponse.status) {
-          const result: SessionSummaryResult = sessionSummaryResponse.message;
-          if (result) {
-            setSessionSummary(result.sumary);
-            setSessionList(result.sessions);
-          }
-        }
-      })
-      .catch(console.log);
-
-    if (isCheckedIn) {
-      getQueues()
-        .then((queueResponse) => {
-          if (queueResponse.status) {
-            const data = queueResponse.message;
-            setQueueList(data);
-          }
-        })
-        .catch((error) => console.log(error));
-    }
   }, [isCheckedIn]);
 
   return (

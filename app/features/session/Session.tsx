@@ -169,7 +169,7 @@ export default function Session() {
                     })
                     .unref();
 
-                  history.push(routes.HOME);
+                  history.goBack();
                   dispatch(setAngryWarningShow(false));
                 })
                 .catch((error) => console.log(error));
@@ -242,17 +242,13 @@ export default function Session() {
                           </li>
                         ))
                       ) : (
-                        <>
-                          <div className="">No task available</div>
-                        </>
+                        <>{/* <div className="">No task available</div> */}</>
                       )}
                     </ul>
                   </div>
                 ))
               ) : (
-                <>
-                  <div className="">No category available</div>
-                </>
+                <>{/* <div className="">No category available</div> */}</>
               )}
             </div>
           </div>
