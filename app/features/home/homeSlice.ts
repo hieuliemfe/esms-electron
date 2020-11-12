@@ -15,7 +15,7 @@ const homeSlice = createSlice({
   },
   reducers: {
     addEviUrl: (state, { payload }) => {
-      state.eviUrls = { ...state.eviUrls, payload };
+      state.eviUrls = { ...state.eviUrls, ...payload };
     },
     setCheckedIn: (state, { payload }) => {
       state.isCheckedIn = payload;

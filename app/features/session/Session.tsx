@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -5,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import path from 'path';
 import { spawn } from 'child_process';
 import {
@@ -25,6 +29,7 @@ import {
   SessionDetectedInfo,
 } from './sessionSlice';
 import { selectCounterId } from '../login/loginSlice';
+import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import { setAngryWarningShow } from '../../components/modals/angryWarningModalSlice';
 import {
   createClientSocket,
@@ -54,9 +59,26 @@ export default function Session() {
     __dirname,
     `../evidences/${evidenceFoldername}`
   );
+  const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [isShowForm, setShowForm] = useState(false);
+  const { register, handleSubmit } = useForm();
   let sessionDetectedResult: SessionDetectedInfo;
   let sessionEmotionInfo: EmotionInfo[] = [];
   let endSessionInfo: EndSessionInfo;
+
+  const selectTask = (taskName: string) => {
+    setSelectedTask(taskName);
+    setShowForm(true);
+  };
+
+  const onSubmit = async () => {
+    dispatch(setLoading(true));
+    await new Promise(() => {
+      setTimeout(() => {
+        dispatch(setLoading(false));
+      }, 1000);
+    });
+  };
 
   useEffect(() => {
     getCounterCategory(counterId)
@@ -209,7 +231,11 @@ export default function Session() {
                     <ul>
                       {category.taskList && category.taskList.length > 0 ? (
                         category.taskList.map((task) => (
-                          <li className={styles.taskNameWrapper} key={task.id}>
+                          <li
+                            className={styles.taskNameWrapper}
+                            key={task.id}
+                            onClick={() => selectTask(task.name)}
+                          >
                             <span className={styles.taskName}>{task.name}</span>
                           </li>
                         ))
@@ -229,7 +255,74 @@ export default function Session() {
             </div>
           </div>
         </div>
-        <div className={styles.contentWrapper} />
+        <div className={styles.contentWrapper}>
+          {isShowForm ? (
+            <>
+              <span className={styles.formTitle}>{selectedTask}</span>
+              <form
+                className={styles.formWrapper}
+                onSubmit={handleSubmit(onSubmit)}
+              >
+                <span className={styles.formSubtitle}>Sender information</span>
+                <div className={styles.lineWrapper}>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      Customer Name
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="cusName"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>
+                      ID Card
+                      <span className={styles.required}>*</span>
+                    </span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="idcard"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+                <div className={styles.lineWrapper}>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>Phone</span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="phone"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                  <div className={styles.fieldWrapper}>
+                    <span className={styles.fieldLabel}>Account Number</span>
+                    <input
+                      ref={register({ required: true })}
+                      type="text"
+                      name="accNum"
+                      className={styles.fieldInput}
+                    />
+                  </div>
+                </div>
+                <div className={styles.fieldWrapper}>
+                  <input
+                    type="submit"
+                    className={styles.btnDone}
+                    value="SUBMIT"
+                  />
+                </div>
+              </form>
+            </>
+          ) : (
+            <></>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -58,6 +58,28 @@ const getLocalVideoPath = (sessionId: number) =>
 
 const localFileExist = (pathToFile: string) => fs.existsSync(pathToFile);
 
+const msToStr = (ms: number, _callCount = 1): string => {
+  if (ms < 1000) {
+    return `${ms} ms`;
+  }
+  if (ms < 60000) {
+    const secs = Math.floor(ms / 1000);
+    return `${secs} sec${secs === 1 ? '' : 's'}`;
+  }
+  if (ms < 3600000) {
+    const mins = Math.floor(ms / 60000);
+    return `${mins} min${mins === 1 ? '' : 's'} ${msToStr(
+      ms % 60000,
+      _callCount + 1
+    )}`;
+  }
+  const hours = Math.floor(ms / 3600000);
+  return `${hours} hour${hours === 1 ? '' : 's'} ${msToStr(
+    ms % 3600000,
+    _callCount + 1
+  )}`;
+};
+
 export default function Home() {
   const dispatch = useDispatch();
   const profile: ProfileInfo = useSelector(selectUserProfile) as ProfileInfo;
@@ -78,16 +100,14 @@ export default function Home() {
     setSessionSummary,
   ] = useState<SessionSummaryInfo | null>(null);
   const [sessionList, setSessionList] = useState<SessionInfo[] | null>(null);
+  const videoPlayer = React.createRef() as React.RefObject<HTMLVideoElement>;
 
   const showEvi = (sessionId: number) => {
-    console.log('hello evi', sessionId);
-    setShowEvi(false);
-    setVideoEviName(null);
-    setVideoEviPath(null);
     const localVideoPath = getLocalVideoPath(sessionId);
     if (localFileExist(localVideoPath)) {
       setVideoEviName(null);
       setVideoEviPath(localVideoPath);
+      videoPlayer.current?.load();
     } else {
       setVideoEviPath(null);
       const veName = `session_${fourDigits(sessionId)}/video.mp4`;
@@ -96,6 +116,11 @@ export default function Home() {
     }
     setShowEvi(true);
   };
+
+  useEffect(() => {
+    videoPlayer.current?.load();
+    videoPlayer.current?.play();
+  }, [eviUrls]);
 
   const startSession = (queueId: number) => {
     assignQueue(counterId, queueId)
@@ -404,18 +429,31 @@ export default function Home() {
                   <span>{sessionSummary?.angryWarningCount}</span>
                 </span>
               </div>
-              <div
-                className={`${styles.videoWrapper} ${
-                  isShowEvi ? styles.show : ''
-                }`}
-              >
+            </div>
+            <div
+              className={`${styles.footerTailWrapper} ${
+                isShowEvi ? styles.showVideo : ''
+              }`}
+            >
+              <div className={styles.videoWrapper}>
+                {isShowEvi ? (
+                  <div
+                    className={styles.btnCloseEvi}
+                    onClick={() => setShowEvi(false)}
+                  >
+                    <i className="fa fa-times" />
+                    {` Close video`}
+                  </div>
+                ) : (
+                  <></>
+                )}
                 {videoEviPath ? (
-                  <video controls autoPlay>
+                  <video ref={videoPlayer} controls autoPlay>
                     <source src={videoEviPath} type="video/mp4" />
                     No video found
                   </video>
                 ) : videoEviName ? (
-                  <video controls autoPlay>
+                  <video ref={videoPlayer} controls autoPlay>
                     <source src={eviUrls[videoEviName]} type="video/mp4" />
                     No video found
                   </video>
@@ -423,40 +461,44 @@ export default function Home() {
                   <></>
                 )}
               </div>
-            </div>
-            <div className={styles.sessionList}>
-              {sessionList && sessionList.length > 0 ? (
-                <div
-                  className={styles.sessionInner}
-                  style={{ width: 40 + 180 * sessionList.length }}
-                >
-                  {sessionList.map((session: SessionInfo) => (
-                    <div className={styles.sessionItem} key={session.id}>
-                      <div
-                        className={styles.sessionItemHead}
-                        onClick={() => showEvi(session.id)}
-                      >
-                        <i className="far fa-clock" />
-                        <div className={styles.viewEviBtn}>Show Evidence</div>
-                      </div>
-                      <div className={styles.sessionItemTail}>
-                        <span className={styles.sname}>
-                          {`session_${fourDigits(session.id)}`}
-                        </span>
-                        <span />
-                        <span className={styles.stime}>
-                          {`Duration: ${session.sessionDuration}`}
-                        </span>
-                        <span className={styles.stime}>
-                          {`Angry Warnings: ${session.angryWarningCount}`}
-                        </span>
-                      </div>
+              <div className={styles.sessionListWrapper}>
+                <div className={styles.sessionList}>
+                  {sessionList && sessionList.length > 0 ? (
+                    <div
+                      className={styles.sessionInner}
+                      style={{ width: 40 + 180 * sessionList.length }}
+                    >
+                      {sessionList.map((session: SessionInfo) => (
+                        <div className={styles.sessionItem} key={session.id}>
+                          <div
+                            className={styles.sessionItemHead}
+                            onClick={() => showEvi(session.id)}
+                          >
+                            <i className="far fa-clock" />
+                            <div className={styles.viewEviBtn}>
+                              Show Evidence
+                            </div>
+                          </div>
+                          <div className={styles.sessionItemTail}>
+                            <span className={styles.sname}>
+                              {`session_${fourDigits(session.id)}`}
+                            </span>
+                            <span />
+                            <span className={styles.stime}>
+                              {`Duration: ${msToStr(session.sessionDuration)}`}
+                            </span>
+                            <span className={styles.stime}>
+                              {`Angry Warnings: ${session.angryWarningCount}`}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <></>
+                  )}
                 </div>
-              ) : (
-                <></>
-              )}
+              </div>
             </div>
           </div>
         </div>
