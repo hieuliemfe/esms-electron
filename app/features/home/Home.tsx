@@ -188,17 +188,6 @@ export default function Home() {
         }
       })
       .catch(console.log);
-
-    if (isCheckedIn) {
-      getQueues()
-        .then((queueResponse) => {
-          if (queueResponse.status) {
-            const data = queueResponse.message;
-            setQueueList(data);
-          }
-        })
-        .catch((error) => console.log(error));
-    }
   });
 
   useEffect(() => {
@@ -249,6 +238,17 @@ export default function Home() {
         }
       })
       .catch(console.log);
+
+    if (isCheckedIn) {
+      getQueues()
+        .then((queueResponse) => {
+          if (queueResponse.status) {
+            const data = queueResponse.message;
+            setQueueList(data);
+          }
+        })
+        .catch((error) => console.log(error));
+    }
   }, [isCheckedIn]);
 
   return (
