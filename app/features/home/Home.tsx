@@ -85,9 +85,9 @@ const msToStr = (ms: number, _callCount = 1): string => {
 const calculateShiftOver = (sh: ShiftTypeInfo) => {
   const currentTime = Date.now();
   const dateStr = new Date().toJSON().split('T')[0];
-  const shst = new Date(
-    new Date(`${dateStr}T${sh.shiftEnd}`).getTime() - 30 * 60 * 1000
-  ).getTime();
+  const cmpDate = new Date(`${dateStr}T${sh.shiftEnd}`);
+  cmpDate.setDate(new Date().getDate());
+  const shst = new Date(cmpDate.getTime() - 30 * 60 * 1000).getTime();
   return sh.shiftStart < sh.shiftEnd && shst < currentTime;
 };
 
