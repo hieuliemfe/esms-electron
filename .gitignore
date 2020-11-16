@@ -1,6 +1,4 @@
 venv/
-detection/*
-!detection/.gitkeep
 evidences/*
 !evidences/.gitkeep
 # Logs
