@@ -6,8 +6,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import path from 'path';
 import routes from '../../constants/routes.json';
-import { selectUserProfile, ProfileInfo } from '../login/loginSlice';
+import { ProfileInfo } from '../../services/root';
 import { getSessionSummary, SessionInfo } from '../../services/sessions';
+import { selectUserProfile } from '../login/loginSlice';
 import styles from './SessionHistoryDetail.css';
 import { selectHistoryId } from './sessionSlice';
 
@@ -25,7 +26,8 @@ const formatDate = (dateStr: string | undefined) => {
 };
 
 const emotionLevel = (sessionInfo: SessionInfo) => {
-  return (+JSON.parse(sessionInfo.info).emotion_level).toFixed(2);
+  return 0;
+  // (+JSON.parse(sessionInfo.info).emotion_level).toFixed(2);
 };
 
 export default function SessionHistoryDetail() {

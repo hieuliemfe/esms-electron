@@ -26,21 +26,33 @@ export type SessionInfo = {
   angryWarningCount: number;
 };
 
-export type SessionSummaryResult = {
-  sumary: SessionSummaryInfo;
+export type GetSessionSummaryData = {
+  employeeCode: string;
+  startDate: string;
+  endDate: string;
+  page?: number;
+  limit?: number;
+};
+
+export type GetSessionSummaryResult = {
+  summary: SessionSummaryInfo;
   sessions: SessionInfo[];
 };
 
-type GetSessionSummaryResponse = EsmsResponse<SessionSummaryResult>;
+type GetSessionSummaryResponse = EsmsResponse<GetSessionSummaryResult>;
+
+const objToParamStr = (obj: any) =>
+  Object.entries(obj)
+    .map((e) => e.join('='))
+    .join('&');
 
 export async function getSessionSummary(
-  employeeCode: string,
-  page = 1,
-  limit = 10
+  getSessionSummaryData: GetSessionSummaryData
 ): Promise<GetSessionSummaryResponse> {
-  return request.get(
-    `/sessions?employeeCode=${employeeCode}&page=${page}&limit=${limit}`
-  ) as Promise<GetSessionSummaryResponse>;
+  const data = { ...{ page: 1, limit: 100 }, ...getSessionSummaryData };
+  return request.get(`/sessions?${objToParamStr(data)}`) as Promise<
+    GetSessionSummaryResponse
+  >;
 }
 
 type CreateSessionInfo = {
@@ -63,19 +75,19 @@ export async function startSession(
   >;
 }
 
-export type EmotionPeriodInfo = {
+export type EmotionPeriodData = {
   duration: number;
   periodEnd: number;
   periodStart: number;
 };
 
-export type EmotionInfo = {
+export type EmotionData = {
   emotion: number;
-  periods: EmotionPeriodInfo[];
+  periods: EmotionPeriodData[];
 };
 
-export type EndSessionInfo = {
-  emotions: EmotionInfo[];
+export type EndSessionData = {
+  emotions: EmotionData[];
   info: string;
 };
 
@@ -83,7 +95,7 @@ type EndSessionResponse = EsmsResponse<any>;
 
 export async function endSession(
   sessionId: number,
-  detectedData: EndSessionInfo
+  detectedData: EndSessionData
 ): Promise<EndSessionResponse> {
   return request.put(`/sessions/${sessionId}/end`, {
     body: JSON.stringify(detectedData),

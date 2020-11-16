@@ -1,15 +1,14 @@
-import request from '../utils/request';
-import { ProfileInfo } from '../features/login/loginSlice';
+import request, { EsmsResponse } from '../utils/request';
+import { CounterInfo } from './counters';
 
 type LoginInfo = {
   employeeCode: string;
   roleName: string;
+  Counter: CounterInfo;
 };
 
-type LoginResponse = {
-  status: boolean;
+type LoginResponse = EsmsResponse<LoginInfo> & {
   token: string;
-  message: LoginInfo;
 };
 
 export async function login(
@@ -22,10 +21,24 @@ export async function login(
   }) as Promise<LoginResponse>;
 }
 
-type ProfileResponse = {
-  status: boolean;
-  message: ProfileInfo;
+export type RoleInfo = {
+  id: number;
+  roleName: string;
 };
+
+export type ProfileInfo = {
+  id: string;
+  employeeCode: string;
+  email: string;
+  fullname: string;
+  phoneNumber: string;
+  avatarUrl: string;
+  isSubscribed: boolean;
+  counterId: number;
+  Role: RoleInfo;
+};
+
+type ProfileResponse = EsmsResponse<ProfileInfo>;
 
 export async function getProfile(): Promise<ProfileResponse> {
   return request.get('/profile') as Promise<ProfileResponse>;

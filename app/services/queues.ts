@@ -28,3 +28,9 @@ export async function assignQueue(
     body: JSON.stringify(payload),
   }) as Promise<AssignResponse>;
 }
+
+type SkipResponse = EsmsResponse<number>;
+
+export async function skipQueue(queueId: number): Promise<SkipResponse> {
+  return request.put(`/queues/${queueId}`) as Promise<SkipResponse>;
+}

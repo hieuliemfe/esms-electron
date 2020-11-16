@@ -5,13 +5,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { ipcRenderer } from 'electron';
 import routes from '../../constants/routes.json';
+import { ProfileInfo } from '../../services/root';
 import { getShifts, checkinShift, ShiftInfo } from '../../services/shifts';
 import {
   selectUserProfile,
   setToken,
   setCounterId,
   setShiftId,
-  ProfileInfo,
 } from '../login/loginSlice';
 import { setToken as setRequestToken } from '../../utils/request';
 import styles from './Checkin.css';
@@ -61,7 +61,7 @@ export default function Checkin() {
     if (!activeShift) {
       getShifts()
         .then((shiftResponse) => {
-          if (shiftResponse.status) {
+          if (shiftResponse.success) {
             const data = shiftResponse.message;
             const actvShift = data.pop();
             if (actvShift) {

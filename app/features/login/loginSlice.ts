@@ -1,22 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../../store';
-
-export type RoleInfo = {
-  id: number;
-  roleName: string;
-};
-
-export type ProfileInfo = {
-  id: string;
-  employeeCode: string;
-  email: string;
-  fullname: string;
-  phoneNumber: string;
-  avatarUrl: string;
-  isSubscribed: boolean;
-  Role: RoleInfo;
-};
+import { ProfileInfo } from '../../services/root';
 
 const loginSlice = createSlice({
   name: 'login',

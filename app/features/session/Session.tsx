@@ -15,9 +15,9 @@ import routes from '../../constants/routes.json';
 import {
   startSession,
   endSession,
-  EmotionInfo,
-  EmotionPeriodInfo,
-  EndSessionInfo,
+  EmotionData,
+  EmotionPeriodData,
+  EndSessionData,
 } from '../../services/sessions';
 import {
   getCounterCategory,
@@ -64,8 +64,8 @@ export default function Session() {
   const [isShowForm, setShowForm] = useState(false);
   const { register, handleSubmit, reset } = useForm();
   let sessionDetectedResult: SessionDetectedInfo;
-  let sessionEmotionInfo: EmotionInfo[] = [];
-  let endSessionInfo: EndSessionInfo;
+  let sessionEmotionInfo: EmotionData[] = [];
+  let endSessionInfo: EndSessionData;
 
   const selectTask = (taskName: string) => {
     setSelectedTask(taskName);
@@ -85,14 +85,14 @@ export default function Session() {
   useEffect(() => {
     getCounterCategory(counterId)
       .then(async (counterCategoryResponse) => {
-        if (counterCategoryResponse.status) {
+        if (counterCategoryResponse.success) {
           const data = counterCategoryResponse.message;
           const catList: CategoryInfo[] = data.map((cat) => cat.Category);
           if (catList && catList.length > 0) {
             for (let i = 0; i < catList.length; i++) {
               const cat = catList[i];
               const taskListResponse = await getCategoryTasks(cat.id);
-              if (taskListResponse.status) {
+              if (taskListResponse.success) {
                 const taskList = taskListResponse.message;
                 cat.taskList = taskList;
               }
@@ -142,14 +142,14 @@ export default function Session() {
                           duration: p.duration,
                           periodStart: p.period_start,
                           periodEnd: p.period_end,
-                        } as EmotionPeriodInfo)
+                        } as EmotionPeriodData)
                     ),
-                  } as EmotionInfo)
+                  } as EmotionData)
               );
               endSessionInfo = {
                 emotions: sessionEmotionInfo,
                 info: JSON.stringify(sessionDetectedResult.result),
-              } as EndSessionInfo;
+              } as EndSessionData;
               endSession(sessionId, endSessionInfo)
                 .then(() => {
                   setFrame(path.join(__dirname, '../resources/video.jpg'));

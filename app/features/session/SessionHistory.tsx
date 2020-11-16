@@ -5,8 +5,9 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import routes from '../../constants/routes.json';
-import { selectUserProfile, ProfileInfo } from '../login/loginSlice';
+import { ProfileInfo } from '../../services/root';
 import { getSessionSummary, SessionInfo } from '../../services/sessions';
+import { selectUserProfile } from '../login/loginSlice';
 import { setHistoryId } from './sessionSlice';
 import styles from './SessionHistory.css';
 
@@ -23,7 +24,8 @@ const formatDate = (dateStr: string | undefined) => {
 };
 
 const emotionLevel = (sessionInfo: SessionInfo) => {
-  return (+JSON.parse(sessionInfo.info).emotion_level).toFixed(2);
+  return 0;
+  // (+JSON.parse(sessionInfo.info).emotion_level).toFixed(2);
 };
 
 export default function SessionHistory() {
@@ -42,16 +44,16 @@ export default function SessionHistory() {
 
   const goBack = () => history.goBack();
 
-  useEffect(() => {
-    getSessionSummary(page, limit)
-      .then((sessionSummaryResponse) => {
-        if (sessionSummaryResponse.status) {
-          const data = sessionSummaryResponse.message;
-          setSessionList(data);
-        }
-      })
-      .catch((error) => console.log(error));
-  }, [page, limit]);
+  // useEffect(() => {
+  //   getSessionSummary(page, limit)
+  //     .then((sessionSummaryResponse) => {
+  //       if (sessionSummaryResponse.success) {
+  //         const data = sessionSummaryResponse.message;
+  //         setSessionList(data);
+  //       }
+  //     })
+  //     .catch((error) => console.log(error));
+  // }, [page, limit]);
 
   return (
     <div className={styles.container}>
@@ -141,13 +143,13 @@ export default function SessionHistory() {
                         {formatDate(session.sessionEnd)}
                       </span>
                     </div>
-                    <span
+                    {/* <span
                       className={`${styles.sessionEvaluate} ${
                         styles[session.status]
                       }`}
                     >
                       {session.status}
-                    </span>
+                    </span> */}
                   </div>
                 </div>
               ))}

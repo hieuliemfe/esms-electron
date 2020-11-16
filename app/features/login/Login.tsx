@@ -6,14 +6,9 @@ import path from 'path';
 import { ipcRenderer } from 'electron';
 import { useHistory } from 'react-router-dom';
 import routes from '../../constants/routes.json';
-import { login, getProfile } from '../../services/root';
+import { login, getProfile, ProfileInfo } from '../../services/root';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
-import {
-  setToken,
-  setUserProfile,
-  setCounterId,
-  setShiftId,
-} from './loginSlice';
+import { setToken, setUserProfile, setCounterId } from './loginSlice';
 import { setToken as setRequestToken } from '../../utils/request';
 import styles from './Login.css';
 
@@ -29,14 +24,16 @@ export default function Login() {
       dispatch(setLoading(true));
       const loginResponse = await login(data.empCode, data.empPass);
       if (loginResponse) {
-        if (loginResponse.status) {
+        if (loginResponse.success) {
           dispatch(setToken(loginResponse.token));
           setRequestToken(loginResponse.token);
 
           const profileResponse = await getProfile();
-          if (profileResponse.status) {
+          if (profileResponse.success) {
+            const profileInfo: ProfileInfo = profileResponse.message;
             ipcRenderer.send('login-success');
-            dispatch(setUserProfile(profileResponse.message));
+            dispatch(setUserProfile(profileInfo));
+            dispatch(setCounterId(profileInfo.counterId));
             history.push(routes.HOME);
           }
         }

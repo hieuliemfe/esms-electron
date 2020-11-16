@@ -1,3 +1,6 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/media-has-caption */
 /* eslint-disable no-nested-ternary */
 /* eslint-disable promise/no-nesting */
@@ -11,29 +14,32 @@ import fs from 'fs';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { ipcRenderer } from 'electron';
+import DatePicker from 'react-datepicker';
 import routes from '../../constants/routes.json';
 import {
   getShifts,
-  checkinShift,
+  createShift,
   checkoutShift,
-  ShiftInfo,
+  CreateShiftData,
 } from '../../services/shifts';
 import { getShiftTypes, ShiftTypeInfo } from '../../services/shift-types';
+import { ProfileInfo } from '../../services/root';
 import { getQueues, assignQueue, QueueInfo } from '../../services/queues';
 import {
   createSession,
   getSessionSummary,
-  SessionSummaryResult,
-  SessionSummaryInfo,
+  GetSessionSummaryData,
+  GetSessionSummaryResult,
   SessionInfo,
 } from '../../services/sessions';
 import {
-  selectEviUrls,
+  selectEviVideos,
   selectIsShowShiftList,
   selectIsCheckedIn,
+  selectLastUpdateSession,
   setShowShiftList,
   setCheckedIn,
-  EvidenceUrl,
+  EvidenceUrls,
 } from './homeSlice';
 import {
   selectUserProfile,
@@ -42,7 +48,6 @@ import {
   setToken,
   setCounterId,
   setShiftId,
-  ProfileInfo,
 } from '../login/loginSlice';
 import { setSessionId } from '../session/sessionSlice';
 import { setToken as setRequestToken } from '../../utils/request';
@@ -50,11 +55,8 @@ import styles from './Home.css';
 
 const fourDigits = (num: number | string) => `${`000${num}`.substr(-4)}`;
 
-const getLocalVideoPath = (sessionId: number) =>
-  path.join(
-    __dirname,
-    `../evidences/session_${fourDigits(sessionId)}/video.mp4`
-  );
+const getLocalEviPath = (sessionId: number) =>
+  path.join(__dirname, `../evidences/session_${fourDigits(sessionId)}`);
 
 const localFileExist = (pathToFile: string) => fs.existsSync(pathToFile);
 
@@ -80,34 +82,67 @@ const msToStr = (ms: number, _callCount = 1): string => {
   )}`;
 };
 
+const calculateShiftOver = (sh: ShiftTypeInfo) => {
+  const currentTime = Date.now();
+  const dateStr = new Date().toJSON().split('T')[0];
+  const shst = new Date(
+    new Date(`${dateStr}T${sh.shiftEnd}`).getTime() - 30 * 60 * 1000
+  ).getTime();
+  return sh.shiftStart < sh.shiftEnd && shst < currentTime;
+};
+
+type DateButtonProps = {
+  onClick?: any;
+  value?: string;
+};
+
+// eslint-disable-next-line react/display-name
+const DateButton = React.forwardRef<any, DateButtonProps>(
+  (props, forwardedRef) => {
+    const { value, onClick } = props;
+    return (
+      <button
+        ref={forwardedRef}
+        type="button"
+        className={styles.btnDate}
+        onClick={onClick}
+      >
+        {value}
+      </button>
+    );
+  }
+);
+
 export default function Home() {
   const dispatch = useDispatch();
   const profile: ProfileInfo = useSelector(selectUserProfile) as ProfileInfo;
-  const eviUrls: EvidenceUrl = useSelector(selectEviUrls) as EvidenceUrl;
+  const eviVideos: EvidenceUrls = useSelector(selectEviVideos) as EvidenceUrls;
   const history = useHistory();
   const logo = path.join(__dirname, '../resources/esms_logo200.png');
   const isShowShiftList = useSelector(selectIsShowShiftList);
   const isCheckedIn = useSelector(selectIsCheckedIn);
   const shiftId = useSelector(selectShiftId);
   const counterId = useSelector(selectCounterId);
+  const lastUpdateSession = useSelector(selectLastUpdateSession);
   const [shiftList, setShiftList] = useState<ShiftTypeInfo[] | null>(null);
   const [queueList, setQueueList] = useState<QueueInfo[] | null>(null);
   const [isShowEvi, setShowEvi] = useState(false);
   const [videoEviPath, setVideoEviPath] = useState<string | null>(null);
   const [videoEviName, setVideoEviName] = useState<string | null>(null);
-  const [
-    sessionSummary,
-    setSessionSummary,
-  ] = useState<SessionSummaryInfo | null>(null);
   const [sessionList, setSessionList] = useState<SessionInfo[] | null>(null);
   const videoPlayer = React.createRef() as React.RefObject<HTMLVideoElement>;
+  const [selectedDay, setSelectedDay] = useState(new Date());
 
   const showEvi = (sessionId: number) => {
-    const localVideoPath = getLocalVideoPath(sessionId);
-    if (localFileExist(localVideoPath)) {
+    const localEviPath = getLocalEviPath(sessionId);
+    if (localFileExist(localEviPath)) {
       setVideoEviName(null);
-      setVideoEviPath(localVideoPath);
-      videoPlayer.current?.load();
+      setVideoEviPath(`${localEviPath}/video.mp4`);
+      const videoRef = videoPlayer.current;
+      if (videoRef) {
+        videoRef.load();
+        videoRef.play();
+      }
     } else {
       setVideoEviPath(null);
       const veName = `session_${fourDigits(sessionId)}/video.mp4`;
@@ -118,16 +153,19 @@ export default function Home() {
   };
 
   useEffect(() => {
-    videoPlayer.current?.load();
-    videoPlayer.current?.play();
-  }, [eviUrls]);
+    const videoRef = videoPlayer.current;
+    if (videoRef) {
+      videoRef.load();
+      videoRef.play();
+    }
+  }, [eviVideos]);
 
   const startSession = (queueId: number) => {
     assignQueue(counterId, queueId)
       .then(async (assignResponse) => {
-        if (assignResponse.status) {
+        if (assignResponse.success) {
           const createSessionResponse = await createSession();
-          if (createSessionResponse.status) {
+          if (createSessionResponse.success) {
             const sessionInfo = createSessionResponse.message;
             dispatch(setSessionId(sessionInfo.id));
             history.push(routes.SESSION);
@@ -137,17 +175,21 @@ export default function Home() {
       .catch((error) => console.log(error));
   };
 
-  const checkin = (selectedShift: ShiftInfo | undefined) => {
-    if (selectedShift) {
-      const { counterId: ctId, id: shId } = selectedShift;
-      checkinShift(shId)
-        .then(() => {
-          dispatch(setCounterId(ctId));
-          dispatch(setShiftId(shId));
-          if (!isCheckedIn) {
-            dispatch(setCheckedIn(true));
+  const checkin = (selectedShiftType: ShiftTypeInfo | undefined) => {
+    if (selectedShiftType) {
+      const createShiftData: CreateShiftData = {
+        shiftTypeId: selectedShiftType.id,
+      };
+      createShift(createShiftData)
+        .then((createShiftResponse) => {
+          if (createShiftResponse.success) {
+            const { shiftId: shId } = createShiftResponse.message;
+            dispatch(setShiftId(shId));
+            if (!isCheckedIn) {
+              dispatch(setCheckedIn(true));
+            }
+            dispatch(setShowShiftList(false));
           }
-          dispatch(setShowShiftList(false));
         })
         .catch(console.log);
     }
@@ -160,7 +202,7 @@ export default function Home() {
         dispatch(setShiftId(0));
         dispatch(setCheckedIn(false));
       })
-      .catch((error) => console.log(error));
+      .catch(console.log);
   };
 
   const toggleShowShiftList = () => {
@@ -172,36 +214,67 @@ export default function Home() {
     dispatch(setCounterId(0));
     dispatch(setShiftId(0));
     dispatch(setToken(''));
+    dispatch(setCheckedIn(false));
     ipcRenderer.send('logout');
     history.push('/');
   };
 
   useEffect(() => {
-    getSessionSummary(profile.employeeCode)
+    const startDate = new Date(selectedDay);
+    startDate.setHours(0);
+    startDate.setMinutes(0);
+    startDate.setSeconds(0);
+    startDate.setMilliseconds(0);
+    const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+    const getSessionSummaryData: GetSessionSummaryData = {
+      employeeCode: profile.employeeCode,
+      startDate: startDate.toJSON(),
+      endDate: endDate.toJSON(),
+    };
+    getSessionSummary(getSessionSummaryData)
       .then((sessionSummaryResponse) => {
-        if (sessionSummaryResponse.status) {
-          const result: SessionSummaryResult = sessionSummaryResponse.message;
+        if (sessionSummaryResponse.success) {
+          const result: GetSessionSummaryResult =
+            sessionSummaryResponse.message;
           if (result) {
-            setSessionSummary(result.sumary);
             setSessionList(result.sessions);
           }
         }
       })
       .catch(console.log);
-  });
+
+    if (isCheckedIn) {
+      getQueues()
+        .then((queueResponse) => {
+          if (queueResponse.success) {
+            const data = queueResponse.message;
+            setQueueList(data);
+          }
+        })
+        .catch(console.log);
+    }
+  }, [isCheckedIn, selectedDay, lastUpdateSession]);
 
   useEffect(() => {
     getShiftTypes()
       .then((shiftTypeResponse) => {
-        if (shiftTypeResponse.status) {
+        if (shiftTypeResponse.success) {
           const shifts = shiftTypeResponse.message;
           if (shifts && shifts.length > 0) {
+            let foundToCheckinShift = false;
+            shifts.forEach((sh) => {
+              sh.isOver = calculateShiftOver(sh);
+              if (!sh.isOver && !foundToCheckinShift) {
+                sh.isToCheckIn = true;
+                foundToCheckinShift = true;
+              }
+            });
             getShifts()
               .then((shiftResponse) => {
-                if (shiftResponse.status) {
+                if (shiftResponse.success) {
                   const empShifts = shiftResponse.message;
                   if (empShifts) {
-                    const { activeShifts, upcomingShifts } = empShifts;
+                    const { activeShifts } = empShifts;
                     if (activeShifts && activeShifts.length > 0) {
                       const activeShift = activeShifts[0];
                       const shiftActive = shifts.find(
@@ -210,24 +283,11 @@ export default function Home() {
                       if (shiftActive) {
                         shiftActive.isActive = true;
                       }
-                      checkin(activeShift);
-                    }
-                    if (upcomingShifts && upcomingShifts.length > 0) {
-                      upcomingShifts.forEach((ups, ind) => {
-                        const shiftUpcoming = shifts.find(
-                          (s) => s.id === ups.ShiftType.id
-                        );
-                        if (shiftUpcoming) {
-                          if (
-                            ind === 0 &&
-                            (!activeShifts || activeShifts.length === 0)
-                          ) {
-                            shiftUpcoming.isToCheckIn = true;
-                            shiftUpcoming.ShiftToCheckIn = ups;
-                          }
-                          shiftUpcoming.isAvailable = true;
-                        }
-                      });
+                      dispatch(setShiftId(activeShift.id));
+                      if (!isCheckedIn) {
+                        dispatch(setCheckedIn(true));
+                      }
+                      dispatch(setShowShiftList(false));
                     }
                     setShiftList(shifts);
                   }
@@ -238,17 +298,6 @@ export default function Home() {
         }
       })
       .catch(console.log);
-
-    if (isCheckedIn) {
-      getQueues()
-        .then((queueResponse) => {
-          if (queueResponse.status) {
-            const data = queueResponse.message;
-            setQueueList(data);
-          }
-        })
-        .catch((error) => console.log(error));
-    }
   }, [isCheckedIn]);
 
   return (
@@ -308,8 +357,10 @@ export default function Home() {
                   className={`${styles.shiftItem} ${
                     sh.isActive
                       ? styles.active
-                      : sh.isAvailable
-                      ? styles.available
+                      : sh.isOver
+                      ? styles.inactive
+                      : isCheckedIn
+                      ? styles.unavailable
                       : ''
                   }`}
                   key={sh.id}
@@ -321,10 +372,10 @@ export default function Home() {
                   <div className={styles.shiftTail}>
                     <span className={styles.startTime}>{sh.shiftStart}</span>
                     <span className={styles.endTime}>{sh.shiftEnd}</span>
-                    {sh.isToCheckIn ? (
+                    {!isCheckedIn && sh.isToCheckIn ? (
                       <div
                         className={styles.shiftBtn}
-                        onClick={() => checkin(sh.ShiftToCheckIn)}
+                        onClick={() => checkin(sh)}
                       >
                         Check in
                       </div>
@@ -358,7 +409,7 @@ export default function Home() {
         >
           <div className={styles.firstPart}>
             {/* <div className={styles.calendarWrapper}>
-              <span className={styles.calendarTitle}>Nov, 2020</span>
+              <DayPicker />
             </div> */}
             <div className={styles.greetingWrapper}>
               <div className={styles.welcomeWrapper}>
@@ -422,14 +473,6 @@ export default function Home() {
             <div className={styles.resultWrapper}>
               <div className={styles.resultTextWrapper}>
                 <span className={styles.footerTitle}>Session History</span>
-                <span className={styles.resultTextItem}>
-                  {`Total Sessions Count: `}
-                  <span>{sessionSummary?.totalSessions}</span>
-                </span>
-                <span className={styles.resultTextItem}>
-                  {`Total Angry Warnings Count: `}
-                  <span>{sessionSummary?.angryWarningCount}</span>
-                </span>
               </div>
             </div>
             <div
@@ -456,7 +499,7 @@ export default function Home() {
                   </video>
                 ) : videoEviName ? (
                   <video ref={videoPlayer} controls autoPlay>
-                    <source src={eviUrls[videoEviName]} type="video/mp4" />
+                    <source src={eviVideos[videoEviName]} type="video/mp4" />
                     No video found
                   </video>
                 ) : (
@@ -464,6 +507,15 @@ export default function Home() {
                 )}
               </div>
               <div className={styles.sessionListWrapper}>
+                <div className={styles.btnDateWrapper}>
+                  <DatePicker
+                    selected={selectedDay}
+                    popperPlacement="bottom-start"
+                    onChange={(date) => setSelectedDay(date as Date)}
+                    dateFormat="MMM dd, yyyy"
+                    customInput={<DateButton />}
+                  />
+                </div>
                 <div className={styles.sessionList}>
                   {sessionList && sessionList.length > 0 ? (
                     <div

@@ -34,9 +34,9 @@ export default function WaitingList() {
   const startSession = (queueId: number) => {
     assignQueue(counterId, queueId)
       .then(async (assignResponse) => {
-        if (assignResponse.status) {
+        if (assignResponse.success) {
           const createSessionResponse = await createSession();
-          if (createSessionResponse.status) {
+          if (createSessionResponse.success) {
             const shiftInfo = createSessionResponse.message;
             dispatch(setSessionId(shiftInfo.id));
             history.push(routes.SESSION);
@@ -69,7 +69,7 @@ export default function WaitingList() {
     console.log('call get queues');
     getQueues()
       .then((queueResponse) => {
-        if (queueResponse.status) {
+        if (queueResponse.success) {
           const data = queueResponse.message;
           setQueueList(data);
         }

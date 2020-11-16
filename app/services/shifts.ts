@@ -10,22 +10,34 @@ export type ShiftInfo = {
   shiftDate: string;
   statusId: number;
   ShiftType: ShiftTypeInfo;
-  isToCheckin?: boolean;
 };
 
-type ShiftList = {
+type GetShiftInfo = {
   activeShifts: ShiftInfo[];
-  upcomingShifts: ShiftInfo[];
 };
 
-type ShiftResponse = EsmsResponse<ShiftList>;
+type GetShiftResponse = EsmsResponse<GetShiftInfo>;
 
-export async function getShifts(): Promise<ShiftResponse> {
-  return request.get('/shifts') as Promise<ShiftResponse>;
+export async function getShifts(): Promise<GetShiftResponse> {
+  return request.get('/shifts') as Promise<GetShiftResponse>;
 }
 
-export async function getActiveShift(): Promise<ShiftResponse> {
-  return request.get('/shifts/active-shift') as Promise<ShiftResponse>;
+export type CreateShiftData = {
+  shiftTypeId: number;
+};
+
+export type CreateShiftInfo = {
+  shiftId: number;
+};
+
+type CreateShiftResponse = EsmsResponse<CreateShiftInfo>;
+
+export async function createShift(
+  shiftData: CreateShiftData
+): Promise<CreateShiftResponse> {
+  return request.post('/shifts', {
+    body: JSON.stringify(shiftData),
+  }) as Promise<CreateShiftResponse>;
 }
 
 export type ShiftSummary = {

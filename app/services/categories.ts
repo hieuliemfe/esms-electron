@@ -4,13 +4,12 @@ export type TaskInfo = {
   id: number;
   name: string;
   code: string;
-  categoryId: number;
 };
 
 export type CategoryInfo = {
   id: number;
   categoryName: string;
-  taskList?: TaskInfo[];
+  Tasks?: TaskInfo[];
 };
 
 type CounterCategoryInfo = {

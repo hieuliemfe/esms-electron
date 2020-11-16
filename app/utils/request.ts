@@ -170,6 +170,6 @@ export default {
 };
 
 export type EsmsResponse<T> = {
-  status: boolean;
+  success: boolean;
   message: T;
 };

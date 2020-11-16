@@ -2,6 +2,7 @@
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
+@import '~react-datepicker/dist/react-datepicker.css';
 @import '~@fortawesome/fontawesome-free/css/all.css';
 
 * {
@@ -30,4 +31,35 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgb(91, 155, 213);
   cursor: pointer;
+}
+
+/* datepicker */
+.react-datepicker__navigation--next {
+  border-left-color: rgba(19, 121, 255, 0.3);
+}
+.react-datepicker__navigation--next:hover {
+  border-left-color: rgba(19, 121, 255, 0.7);
+}
+.react-datepicker__navigation--previous {
+  border-right-color: rgba(19, 121, 255, 0.3);
+}
+.react-datepicker__navigation--previous:hover {
+  border-right-color: rgba(19, 121, 255, 0.7);
+}
+.react-datepicker__header {
+  background-color: rgba(19, 121, 255, 0.2);
+}
+.react-datepicker__day--selected {
+  background-color: rgba(19, 121, 255, 0.9);
+}
+.react-datepicker__day--selected:hover {
+  background-color: #1479ff;
+}
+.react-datepicker__day--keyboard-selected {
+  background-color: #fff;
+  color: #000;
+}
+.react-datepicker__day--keyboard-selected:hover {
+  background-color: #f0f0f0;
+  color: #000;
 }

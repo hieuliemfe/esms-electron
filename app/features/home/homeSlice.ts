@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../../store';
 
-export type EvidenceUrl = {
+export type EvidenceUrls = {
   [filename: string]: string;
 };
 
@@ -11,11 +11,16 @@ const homeSlice = createSlice({
   initialState: {
     isShowShiftList: true,
     isCheckedIn: false,
-    eviUrls: {} as EvidenceUrl,
+    eviVideos: {} as EvidenceUrls,
+    eviPeriods: {} as EvidenceUrls,
+    lastUpdateSession: Date.now(),
   },
   reducers: {
-    addEviUrl: (state, { payload }) => {
-      state.eviUrls = { ...state.eviUrls, ...payload };
+    addEviVideo: (state, { payload }) => {
+      state.eviVideos = { ...state.eviVideos, ...payload };
+    },
+    addEviPeriod: (state, { payload }) => {
+      state.eviVideos = { ...state.eviVideos, ...payload };
     },
     setCheckedIn: (state, { payload }) => {
       state.isCheckedIn = payload;
@@ -23,16 +28,27 @@ const homeSlice = createSlice({
     setShowShiftList: (state, { payload }) => {
       state.isShowShiftList = payload;
     },
+    setLastUpdateSession: (state, { payload }) => {
+      state.lastUpdateSession = payload;
+    },
   },
 });
 
-export const { addEviUrl, setShowShiftList, setCheckedIn } = homeSlice.actions;
+export const {
+  addEviVideo,
+  setShowShiftList,
+  setCheckedIn,
+  setLastUpdateSession,
+} = homeSlice.actions;
 
 export default homeSlice.reducer;
 
-export const selectEviUrls = (state: RootState) => state.home.eviUrls;
+export const selectEviVideos = (state: RootState) => state.home.eviVideos;
 
 export const selectIsShowShiftList = (state: RootState) =>
   state.home.isShowShiftList;
 
 export const selectIsCheckedIn = (state: RootState) => state.home.isCheckedIn;
+
+export const selectLastUpdateSession = (state: RootState) =>
+  state.home.lastUpdateSession;
