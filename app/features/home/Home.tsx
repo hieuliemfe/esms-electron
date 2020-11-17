@@ -1,3 +1,5 @@
+/* eslint-disable import/no-dynamic-require */
+/* eslint-disable global-require */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -34,11 +36,13 @@ import {
 } from '../../services/sessions';
 import {
   selectEviVideos,
+  selectEviPeriods,
   selectIsShowShiftList,
   selectIsCheckedIn,
   selectLastUpdateSession,
   setShowShiftList,
   setCheckedIn,
+  EvidencePeriods,
   EvidenceUrls,
 } from './homeSlice';
 import {
@@ -58,7 +62,7 @@ const fourDigits = (num: number | string) => `${`000${num}`.substr(-4)}`;
 const getLocalEviPath = (sessionId: number) =>
   path.join(__dirname, `../evidences/session_${fourDigits(sessionId)}`);
 
-const localFileExist = (pathToFile: string) => fs.existsSync(pathToFile);
+const localExist = (pathToFile: string) => fs.existsSync(pathToFile);
 
 const msToStr = (ms: number, _callCount = 1): string => {
   if (ms < 1000) {
@@ -117,6 +121,9 @@ export default function Home() {
   const dispatch = useDispatch();
   const profile: ProfileInfo = useSelector(selectUserProfile) as ProfileInfo;
   const eviVideos: EvidenceUrls = useSelector(selectEviVideos) as EvidenceUrls;
+  const eviPeriods: EvidencePeriods = useSelector(
+    selectEviPeriods
+  ) as EvidencePeriods;
   const history = useHistory();
   const logo = path.join(__dirname, '../resources/esms_logo200.png');
   const isShowShiftList = useSelector(selectIsShowShiftList);
@@ -129,36 +136,74 @@ export default function Home() {
   const [isShowEvi, setShowEvi] = useState(false);
   const [videoEviPath, setVideoEviPath] = useState<string | null>(null);
   const [videoEviName, setVideoEviName] = useState<string | null>(null);
+  const [periodEviName, setPeriodEviName] = useState<string | null>(null);
   const [sessionList, setSessionList] = useState<SessionInfo[] | null>(null);
   const videoPlayer = React.createRef() as React.RefObject<HTMLVideoElement>;
   const [selectedDay, setSelectedDay] = useState(new Date());
 
   const showEvi = (sessionId: number) => {
     const localEviPath = getLocalEviPath(sessionId);
-    if (localFileExist(localEviPath)) {
+    const eviName = `session_${fourDigits(sessionId)}`;
+    if (localExist(localEviPath)) {
       setVideoEviName(null);
-      setVideoEviPath(`${localEviPath}/video.mp4`);
+      setVideoEviPath(path.join(localEviPath, './video.mp4'));
+      if (!eviPeriods[eviName]) {
+        const periodsInfoPath = path.join(localEviPath, './periods_info.json');
+        ipcRenderer.send('retrieve-from-local', eviName, periodsInfoPath);
+      }
       const videoRef = videoPlayer.current;
       if (videoRef) {
         videoRef.load();
-        videoRef.play();
+        videoRef.play().catch(console.log);
       }
     } else {
       setVideoEviPath(null);
-      const veName = `session_${fourDigits(sessionId)}/video.mp4`;
-      ipcRenderer.send('sign-url-for-path', veName);
-      setVideoEviName(veName);
+      if (!eviVideos[eviName]) {
+        ipcRenderer.send('sign-url-for-path', eviName, `${eviName}/video.mp4`);
+      }
+      if (!eviPeriods[eviName]) {
+        ipcRenderer.send(
+          'sign-url-for-path',
+          `periods:${eviName}`,
+          `${eviName}/periods_info.json`
+        );
+      }
+      setVideoEviName(eviName);
     }
+    setPeriodEviName(eviName);
     setShowEvi(true);
   };
 
-  useEffect(() => {
+  const closeEvi = () => {
+    setShowEvi(false);
+    setPeriodEviName(null);
     const videoRef = videoPlayer.current;
     if (videoRef) {
-      videoRef.load();
-      videoRef.play();
+      videoRef.pause();
     }
-  }, [eviVideos]);
+  };
+
+  const skipToPeriod = (ms: number) => {
+    const videoRef = videoPlayer.current;
+    if (videoRef) {
+      videoRef.currentTime = ms;
+      videoRef.play().catch(console.log);
+    }
+  };
+
+  useEffect(() => {
+    if (showEvi && videoEviName) {
+      const videoRef = videoPlayer.current;
+      if (videoRef) {
+        videoRef.load();
+        videoRef.play().catch(console.log);
+      }
+    }
+  }, [eviVideos, videoEviName, showEvi]);
+
+  useEffect(() => {
+    console.log('[eviPeriods]:', eviPeriods);
+  }, [eviPeriods]);
 
   const startSession = (queueId: number) => {
     assignQueue(counterId, queueId)
@@ -198,7 +243,6 @@ export default function Home() {
   const checkout = () => {
     checkoutShift(shiftId)
       .then(() => {
-        dispatch(setCounterId(0));
         dispatch(setShiftId(0));
         dispatch(setCheckedIn(false));
       })
@@ -481,30 +525,73 @@ export default function Home() {
               }`}
             >
               <div className={styles.videoWrapper}>
-                {isShowEvi ? (
-                  <div
-                    className={styles.btnCloseEvi}
-                    onClick={() => setShowEvi(false)}
-                  >
-                    <i className="fa fa-times" />
-                    {` Close video`}
+                <div className={styles.angryPeriodsWrapper}>
+                  <span className={styles.angryPeriodsTitle}>
+                    Angry Periods:
+                  </span>
+                  <div className={styles.angryPeriodsInner}>
+                    <div className={styles.angryPeriodsInnerInner}>
+                      {isShowEvi ? (
+                        <div className={styles.angryPeriods}>
+                          {periodEviName ? (
+                            eviPeriods[periodEviName].map((period, ind) => (
+                              <div
+                                className={styles.periodItem}
+                                key={period.period_start}
+                                onClick={() => {
+                                  console.log('[period]:', period);
+                                  skipToPeriod(period.period_start);
+                                }}
+                              >
+                                <div className={styles.periodHead}>
+                                  <i className="fas fa-history" />
+                                  <span className={styles.periodName}>
+                                    {`P${fourDigits(ind + 1)}`}
+                                  </span>
+                                </div>
+                                <div className={styles.periodTail}>
+                                  <span className={styles.periodDuration}>
+                                    {`Duration: ${msToStr(period.duration)}`}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <></>
+                          )}
+                        </div>
+                      ) : (
+                        <></>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <></>
-                )}
-                {videoEviPath ? (
-                  <video ref={videoPlayer} controls autoPlay>
-                    <source src={videoEviPath} type="video/mp4" />
-                    No video found
-                  </video>
-                ) : videoEviName ? (
-                  <video ref={videoPlayer} controls autoPlay>
-                    <source src={eviVideos[videoEviName]} type="video/mp4" />
-                    No video found
-                  </video>
-                ) : (
-                  <></>
-                )}
+                </div>
+                <div className={styles.videoInner}>
+                  {isShowEvi ? (
+                    <div
+                      className={styles.btnCloseEvi}
+                      onClick={() => closeEvi()}
+                    >
+                      <i className="fa fa-times" />
+                      {` Close`}
+                    </div>
+                  ) : (
+                    <></>
+                  )}
+                  {videoEviPath ? (
+                    <video ref={videoPlayer} controls autoPlay>
+                      <source src={videoEviPath} type="video/mp4" />
+                      No video found
+                    </video>
+                  ) : videoEviName ? (
+                    <video ref={videoPlayer} controls autoPlay>
+                      <source src={eviVideos[videoEviName]} type="video/mp4" />
+                      No video found
+                    </video>
+                  ) : (
+                    <></>
+                  )}
+                </div>
               </div>
               <div className={styles.sessionListWrapper}>
                 <div className={styles.btnDateWrapper}>

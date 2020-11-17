@@ -2,8 +2,19 @@ import { createSlice } from '@reduxjs/toolkit';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../../store';
 
+type AngryPeriod = {
+  duration: number;
+  emotion: number;
+  period_start: number;
+  period_end: number;
+};
+
 export type EvidenceUrls = {
   [filename: string]: string;
+};
+
+export type EvidencePeriods = {
+  [filename: string]: AngryPeriod[];
 };
 
 const homeSlice = createSlice({
@@ -12,7 +23,7 @@ const homeSlice = createSlice({
     isShowShiftList: true,
     isCheckedIn: false,
     eviVideos: {} as EvidenceUrls,
-    eviPeriods: {} as EvidenceUrls,
+    eviPeriods: {} as EvidencePeriods,
     lastUpdateSession: Date.now(),
   },
   reducers: {
@@ -20,7 +31,7 @@ const homeSlice = createSlice({
       state.eviVideos = { ...state.eviVideos, ...payload };
     },
     addEviPeriod: (state, { payload }) => {
-      state.eviVideos = { ...state.eviVideos, ...payload };
+      state.eviPeriods = { ...state.eviPeriods, ...payload };
     },
     setCheckedIn: (state, { payload }) => {
       state.isCheckedIn = payload;
@@ -36,6 +47,7 @@ const homeSlice = createSlice({
 
 export const {
   addEviVideo,
+  addEviPeriod,
   setShowShiftList,
   setCheckedIn,
   setLastUpdateSession,
@@ -44,6 +56,8 @@ export const {
 export default homeSlice.reducer;
 
 export const selectEviVideos = (state: RootState) => state.home.eviVideos;
+
+export const selectEviPeriods = (state: RootState) => state.home.eviPeriods;
 
 export const selectIsShowShiftList = (state: RootState) =>
   state.home.isShowShiftList;

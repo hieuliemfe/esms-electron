@@ -155,7 +155,7 @@ export default function Session() {
                   setFrame(path.join(__dirname, '../resources/video.jpg'));
                   setCategoryList(null);
                   spawn(PYTHON_VENV_PATH, [
-                    path.join(DETECTION_PATH, 'upload.py'),
+                    path.join(DETECTION_PATH, './upload.py'),
                     '--fr',
                     evidenceFolder.replace(/\\/g, '/'),
                     '--to',

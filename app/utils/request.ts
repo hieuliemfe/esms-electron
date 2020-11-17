@@ -48,13 +48,15 @@ export const API_ENDPOINT = 'http://api.esms-team.site';
  */
 async function request(
   path: string,
-  options?: RequestInit
+  options?: RequestInit,
+  endpointOverride?: string
 ): Promise<unknown | { err: ResponseError }> {
   const opts = options || {};
   const headers = new Headers(opts.headers);
   headers.append('Content-Type', 'application/json');
   opts.headers = headers;
-  const fetchResponse = await fetch(`${API_ENDPOINT}${path}`, opts);
+  const endpoint = endpointOverride || API_ENDPOINT;
+  const fetchResponse = await fetch(`${endpoint}${path}`, opts);
   const response = await checkStatus(fetchResponse);
   return parseJSON(response);
 }
@@ -79,7 +81,8 @@ export const getToken = () => {
  */
 async function requestWithAuth(
   path: string,
-  options?: RequestInit
+  options?: RequestInit,
+  endpointOverride?: string
 ): Promise<unknown | { err: ResponseError }> {
   const opts = options || {};
   if (TOKEN) {
@@ -87,7 +90,7 @@ async function requestWithAuth(
     headers.append('Authorization', `Bearer ${TOKEN}`);
     opts.headers = headers;
   }
-  return request(path, opts);
+  return request(path, opts, endpointOverride);
 }
 
 /**
@@ -101,11 +104,14 @@ async function requestWithAuth(
 export async function methodGet(
   path: string,
   options?: RequestInit,
-  withAuth = true
+  withAuth = true,
+  endpointOverride?: string
 ): Promise<unknown | { err: ResponseError }> {
   const opts = options || {};
   opts.method = 'get';
-  return withAuth ? requestWithAuth(path, opts) : request(path, opts);
+  return withAuth
+    ? requestWithAuth(path, opts, endpointOverride)
+    : request(path, opts, endpointOverride);
 }
 
 /**
@@ -119,11 +125,14 @@ export async function methodGet(
 export async function methodPost(
   path: string,
   options?: RequestInit,
-  withAuth = true
+  withAuth = true,
+  endpointOverride?: string
 ): Promise<unknown | { err: ResponseError }> {
   const opts = options || {};
   opts.method = 'post';
-  return withAuth ? requestWithAuth(path, opts) : request(path, opts);
+  return withAuth
+    ? requestWithAuth(path, opts, endpointOverride)
+    : request(path, opts, endpointOverride);
 }
 
 /**
@@ -137,11 +146,14 @@ export async function methodPost(
 export async function methodPut(
   path: string,
   options?: RequestInit,
-  withAuth = true
+  withAuth = true,
+  endpointOverride?: string
 ): Promise<unknown | { err: ResponseError }> {
   const opts = options || {};
   opts.method = 'put';
-  return withAuth ? requestWithAuth(path, opts) : request(path, opts);
+  return withAuth
+    ? requestWithAuth(path, opts, endpointOverride)
+    : request(path, opts, endpointOverride);
 }
 
 /**
@@ -155,11 +167,14 @@ export async function methodPut(
 export async function methodDelete(
   path: string,
   options?: RequestInit,
-  withAuth = true
+  withAuth = true,
+  endpointOverride?: string
 ): Promise<unknown | { err: ResponseError }> {
   const opts = options || {};
   opts.method = 'delete';
-  return withAuth ? requestWithAuth(path, opts) : request(path, opts);
+  return withAuth
+    ? requestWithAuth(path, opts, endpointOverride)
+    : request(path, opts, endpointOverride);
 }
 
 export default {

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-dynamic-require */
 /* eslint-disable promise/always-return */
 /* eslint global-require: off, no-console: off */
 
@@ -146,18 +147,28 @@ ipcMain.on('login-success', () => {
   }
 });
 
-ipcMain.on('sign-url-for-path', (event: IpcMainEvent, filePath: string) => {
-  if (event && filePath) {
-    generateV4ReadSignedUrl(filePath)
-      .then((url: string) => {
-        const result = {
-          [filePath]: url,
-        };
-        event.sender.send('signed-url', result);
-      })
-      .catch(console.log);
+ipcMain.on(
+  'sign-url-for-path',
+  (event: IpcMainEvent, objName: string, filePath: string) => {
+    if (event && objName && filePath) {
+      generateV4ReadSignedUrl(filePath)
+        .then((url: string) => {
+          event.sender.send('signed-url', objName, url);
+        })
+        .catch(console.log);
+    }
   }
-});
+);
+
+ipcMain.on(
+  'retrieve-from-local',
+  (event: IpcMainEvent, objName: string, filePath: string) => {
+    if (event && objName && filePath) {
+      const result = require(filePath);
+      event.sender.send('retrieved-result', objName, result);
+    }
+  }
+);
 
 ipcMain.on('logout', () => {
   if (mainWindow) {
