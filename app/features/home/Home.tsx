@@ -26,7 +26,13 @@ import {
 } from '../../services/shifts';
 import { getShiftTypes, ShiftTypeInfo } from '../../services/shift-types';
 import { ProfileInfo } from '../../services/root';
-import { getQueues, assignQueue, QueueInfo } from '../../services/queues';
+import {
+  getQueues,
+  assignQueue,
+  skipQueue,
+  removeQueue,
+  QueueInfo,
+} from '../../services/queues';
 import {
   createSession,
   getSessionSummary,
@@ -42,9 +48,11 @@ import {
   selectLastUpdateSession,
   setShowShiftList,
   setCheckedIn,
+  setLastUpdateSession,
   EvidencePeriods,
   EvidenceUrls,
 } from './homeSlice';
+import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import {
   selectUserProfile,
   selectCounterId,
@@ -141,7 +149,32 @@ export default function Home() {
   const videoPlayer = React.createRef() as React.RefObject<HTMLVideoElement>;
   const [selectedDay, setSelectedDay] = useState(new Date());
 
+  const skipCustomer = (queueId: number) => {
+    dispatch(setLoading(true));
+    skipQueue(queueId)
+      .then((skipQueueResponse) => {
+        if (skipQueueResponse.success) {
+          dispatch(setLastUpdateSession(Date.now()));
+          dispatch(setLoading(false));
+        }
+      })
+      .catch(console.log);
+  };
+
+  const removeCustomer = (queueId: number) => {
+    dispatch(setLoading(true));
+    removeQueue(queueId)
+      .then((removeQueueResponse) => {
+        if (removeQueueResponse.success) {
+          dispatch(setLastUpdateSession(Date.now()));
+          dispatch(setLoading(false));
+        }
+      })
+      .catch(console.log);
+  };
+
   const showEvi = (sessionId: number) => {
+    dispatch(setLoading(true));
     const localEviPath = getLocalEviPath(sessionId);
     const eviName = `session_${fourDigits(sessionId)}`;
     if (localExist(localEviPath)) {
@@ -172,11 +205,11 @@ export default function Home() {
     }
     setPeriodEviName(eviName);
     setShowEvi(true);
+    dispatch(setLoading(false));
   };
 
   const closeEvi = () => {
     setShowEvi(false);
-    setPeriodEviName(null);
     const videoRef = videoPlayer.current;
     if (videoRef) {
       videoRef.pause();
@@ -186,7 +219,7 @@ export default function Home() {
   const skipToPeriod = (ms: number) => {
     const videoRef = videoPlayer.current;
     if (videoRef) {
-      videoRef.currentTime = ms;
+      videoRef.currentTime = ms / 1000;
       videoRef.play().catch(console.log);
     }
   };
@@ -206,6 +239,7 @@ export default function Home() {
   }, [eviPeriods]);
 
   const startSession = (queueId: number) => {
+    dispatch(setLoading(true));
     assignQueue(counterId, queueId)
       .then(async (assignResponse) => {
         if (assignResponse.success) {
@@ -213,6 +247,7 @@ export default function Home() {
           if (createSessionResponse.success) {
             const sessionInfo = createSessionResponse.message;
             dispatch(setSessionId(sessionInfo.id));
+            dispatch(setLoading(false));
             history.push(routes.SESSION);
           }
         }
@@ -221,6 +256,7 @@ export default function Home() {
   };
 
   const checkin = (selectedShiftType: ShiftTypeInfo | undefined) => {
+    dispatch(setLoading(true));
     if (selectedShiftType) {
       const createShiftData: CreateShiftData = {
         shiftTypeId: selectedShiftType.id,
@@ -234,9 +270,12 @@ export default function Home() {
               dispatch(setCheckedIn(true));
             }
             dispatch(setShowShiftList(false));
+            dispatch(setLoading(false));
           }
         })
         .catch(console.log);
+    } else {
+      dispatch(setLoading(false));
     }
   };
 
@@ -254,12 +293,14 @@ export default function Home() {
   };
 
   const logout = () => {
+    dispatch(setLoading(true));
     setRequestToken(null);
     dispatch(setCounterId(0));
     dispatch(setShiftId(0));
     dispatch(setToken(''));
     dispatch(setCheckedIn(false));
     ipcRenderer.send('logout');
+    dispatch(setLoading(false));
     history.push('/');
   };
 
@@ -300,6 +341,7 @@ export default function Home() {
   }, [isCheckedIn, selectedDay, lastUpdateSession]);
 
   useEffect(() => {
+    dispatch(setLoading(true));
     getShiftTypes()
       .then((shiftTypeResponse) => {
         if (shiftTypeResponse.success) {
@@ -336,6 +378,7 @@ export default function Home() {
                     setShiftList(shifts);
                   }
                 }
+                dispatch(setLoading(false));
               })
               .catch(console.log);
           }
@@ -481,22 +524,33 @@ export default function Home() {
                 {queueList && queueList.length > 0 ? (
                   <div
                     className={styles.waitingInner}
-                    style={{ width: 40 + 180 * queueList.length }}
+                    style={{ width: 40 + 210 * queueList.length }}
                   >
                     {queueList.map((queue: QueueInfo) => (
                       <div className={styles.waitingItem} key={queue.id}>
                         <div className={styles.waitingItemHead}>
-                          <i className="far fa-user" />
+                          <i className={`far fa-user ${styles.queueIcon}`} />
+                          <span className={styles.waitingNo}>
+                            {fourDigits(queue.number)}
+                          </span>
+                          <i
+                            className={`fas fa-times-circle ${styles.removeIcon}`}
+                            onClick={() => removeCustomer(queue.id)}
+                          />
                           <div
                             className={styles.startSessionBtn}
                             onClick={() => startSession(queue.id)}
                           >
                             Start Session
                           </div>
+                          <i
+                            className={`fas fa-forward ${styles.skipIcon}`}
+                            onClick={() => skipCustomer(queue.id)}
+                          />
                         </div>
                         <div className={styles.waitingItemTail}>
                           <span className={styles.wNo}>
-                            {fourDigits(queue.number)}
+                            {queue.customerName}
                           </span>
                           <span className={styles.wCat}>
                             {queue.Category.categoryName}
@@ -525,21 +579,23 @@ export default function Home() {
               }`}
             >
               <div className={styles.videoWrapper}>
-                <div className={styles.angryPeriodsWrapper}>
-                  <span className={styles.angryPeriodsTitle}>
-                    Angry Periods:
-                  </span>
-                  <div className={styles.angryPeriodsInner}>
-                    <div className={styles.angryPeriodsInnerInner}>
-                      {isShowEvi ? (
-                        <div className={styles.angryPeriods}>
-                          {periodEviName ? (
-                            eviPeriods[periodEviName].map((period, ind) => (
+                {eviPeriods &&
+                periodEviName &&
+                eviPeriods[periodEviName] &&
+                eviPeriods[periodEviName].length > 0 ? (
+                  <div className={styles.angryPeriodsWrapper}>
+                    <span className={styles.angryPeriodsTitle}>
+                      Angry Periods:
+                    </span>
+                    <div className={styles.angryPeriodsInner}>
+                      <div className={styles.angryPeriodsInnerInner}>
+                        {isShowEvi ? (
+                          <div className={styles.angryPeriods}>
+                            {eviPeriods[periodEviName].map((period, ind) => (
                               <div
                                 className={styles.periodItem}
                                 key={period.period_start}
                                 onClick={() => {
-                                  console.log('[period]:', period);
                                   skipToPeriod(period.period_start);
                                 }}
                               >
@@ -555,19 +611,19 @@ export default function Home() {
                                   </span>
                                 </div>
                               </div>
-                            ))
-                          ) : (
-                            <></>
-                          )}
-                        </div>
-                      ) : (
-                        <></>
-                      )}
+                            ))}
+                          </div>
+                        ) : (
+                          <></>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <></>
+                )}
                 <div className={styles.videoInner}>
-                  {isShowEvi ? (
+                  <div className={styles.videoOuter}>
                     <div
                       className={styles.btnCloseEvi}
                       onClick={() => closeEvi()}
@@ -575,22 +631,23 @@ export default function Home() {
                       <i className="fa fa-times" />
                       {` Close`}
                     </div>
-                  ) : (
-                    <></>
-                  )}
-                  {videoEviPath ? (
-                    <video ref={videoPlayer} controls autoPlay>
-                      <source src={videoEviPath} type="video/mp4" />
-                      No video found
-                    </video>
-                  ) : videoEviName ? (
-                    <video ref={videoPlayer} controls autoPlay>
-                      <source src={eviVideos[videoEviName]} type="video/mp4" />
-                      No video found
-                    </video>
-                  ) : (
-                    <></>
-                  )}
+                    {videoEviPath ? (
+                      <video ref={videoPlayer} controls autoPlay>
+                        <source src={videoEviPath} type="video/mp4" />
+                        No video found
+                      </video>
+                    ) : videoEviName ? (
+                      <video ref={videoPlayer} controls autoPlay>
+                        <source
+                          src={eviVideos[videoEviName]}
+                          type="video/mp4"
+                        />
+                        No video found
+                      </video>
+                    ) : (
+                      <></>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className={styles.sessionListWrapper}>

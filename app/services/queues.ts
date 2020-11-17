@@ -8,6 +8,7 @@ type CategoryInfo = {
 export type QueueInfo = {
   id: number;
   number: number;
+  customerName: string;
   Category: CategoryInfo;
 };
 
@@ -33,4 +34,10 @@ type SkipResponse = EsmsResponse<number>;
 
 export async function skipQueue(queueId: number): Promise<SkipResponse> {
   return request.put(`/queues/${queueId}`) as Promise<SkipResponse>;
+}
+
+type RemoveResponse = EsmsResponse<number>;
+
+export async function removeQueue(queueId: number): Promise<RemoveResponse> {
+  return request.delete(`/queues/${queueId}`) as Promise<RemoveResponse>;
 }

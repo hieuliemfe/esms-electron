@@ -11,7 +11,6 @@ import { useHistory } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import path from 'path';
 import { spawn } from 'child_process';
-import routes from '../../constants/routes.json';
 import {
   startSession,
   endSession,
@@ -29,9 +28,9 @@ import {
   selectSessionId,
   SessionDetectedInfo,
 } from './sessionSlice';
+import { setLastUpdateSession } from '../home/homeSlice';
 import { selectCounterId } from '../login/loginSlice';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
-import { setAngryWarningShow } from '../../components/modals/angryWarningModalSlice';
 import {
   createClientSocket,
   setComSocHandler,
@@ -63,6 +62,7 @@ export default function Session() {
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [isShowForm, setShowForm] = useState(false);
   const { register, handleSubmit, reset } = useForm();
+  const [isShowWarning, setShowWarning] = useState(false);
   let sessionDetectedResult: SessionDetectedInfo;
   let sessionEmotionInfo: EmotionData[] = [];
   let endSessionInfo: EndSessionData;
@@ -94,7 +94,7 @@ export default function Session() {
               const taskListResponse = await getCategoryTasks(cat.id);
               if (taskListResponse.success) {
                 const taskList = taskListResponse.message;
-                cat.taskList = taskList;
+                cat.Tasks = taskList;
               }
             }
             setCategoryList(catList);
@@ -118,7 +118,7 @@ export default function Session() {
               Number.parseInt(dataStr, 10),
               (data: string) => {
                 const response = JSON.parse(data);
-                dispatch(setAngryWarningShow(!!response.is_warning));
+                setShowWarning(!!response.is_warning);
                 setFrame(`data:image/png;base64,${response.img_src}`);
               },
               () => needRetryConnect.value
@@ -169,8 +169,8 @@ export default function Session() {
                     })
                     .unref();
 
+                  dispatch(setLastUpdateSession(Date.now()));
                   history.goBack();
-                  dispatch(setAngryWarningShow(false));
                 })
                 .catch((error) => console.log(error));
             }
@@ -202,6 +202,13 @@ export default function Session() {
           <span>ESMS</span>
           Workspace
         </h4>
+        {isShowWarning ? (
+          <span className={styles.warningText}>
+            BE CAREFUL! Your expression seems like critically negative!
+          </span>
+        ) : (
+          <></>
+        )}
         <div>
           <button
             type="button"
@@ -231,8 +238,8 @@ export default function Session() {
                       </span>
                     </div>
                     <ul>
-                      {category.taskList && category.taskList.length > 0 ? (
-                        category.taskList.map((task) => (
+                      {category.Tasks && category.Tasks.length > 0 ? (
+                        category.Tasks.map((task) => (
                           <li
                             className={styles.taskNameWrapper}
                             key={task.id}

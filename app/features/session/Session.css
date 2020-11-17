@@ -206,3 +206,9 @@ textarea {
 span.required {
   color: #ea4335;
 }
+
+span.warningText {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ea4335;
+}
