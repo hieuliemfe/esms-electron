@@ -22,9 +22,17 @@
   border: 2px solid #1479ff;
   font-size: 16px;
   color: #1479ff;
-  cursor: pointer;
   display: flex;
   align-items: center;
+}
+
+.completeSessionBtn:not(:disabled) {
+  cursor: pointer;
+}
+
+.completeSessionBtn:disabled {
+  border: 2px solid rgba(20, 121, 255, 0.3);
+  color: rgba(20, 121, 255, 0.3);
 }
 
 .completeSessionBtn i {
@@ -32,7 +40,7 @@
   padding-right: 10px;
 }
 
-.completeSessionBtn:hover {
+.completeSessionBtn:not(:disabled):hover {
   background-color: #1479ff;
   color: #fff;
 }
@@ -87,6 +95,8 @@
   flex: auto;
   border: 1px solid #da060b;
   margin-top: 3px;
+  display: flex;
+  flex-direction: column;
 }
 
 .angryTitleWrapper {
@@ -99,6 +109,22 @@
   color: #fff;
   font-size: 18px;
   font-weight: normal;
+}
+
+.angryListWrapper {
+  flex: auto;
+}
+
+.cusNameLabel {
+  display: block;
+  width: 100%;
+}
+
+.cusNameText {
+  display: block;
+  width: 100%;
+  font-weight: 18;
+  font-weight: bold;
 }
 
 .contentWrapper {
@@ -330,7 +356,7 @@ span.warningText {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-width: 25%;
+  min-width: calc(100% / 3);
   height: fit-content;
 }
 

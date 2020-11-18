@@ -20,7 +20,7 @@ import {
   EmotionPeriodData,
   EndSessionData,
 } from '../../services/sessions';
-import { getCounter, CounterInfo } from '../../services/counters';
+import { getCounter } from '../../services/counters';
 import { CategoryInfo, TaskInfo } from '../../services/categories';
 import {
   setSessionDetectedResult,
@@ -73,13 +73,21 @@ export default function Session() {
   const [isShowForm, setShowForm] = useState(false);
   const { register, handleSubmit, reset } = useForm();
   const [isShowWarning, setShowWarning] = useState(false);
+  const [canComplete, setCanComplete] = useState(false);
+  const [isDoneTask, setDoneTask] = useState(true);
   let sessionDetectedResult: SessionDetectedInfo;
-  const sessionEmotionInfo: EmotionData[] = [];
+  let sessionEmotionInfo: EmotionData[] = [];
   let endSessionInfo: EndSessionData;
 
   const selectTask = (taskName: string) => {
+    setDoneTask(false);
     setSelectedTaskName(taskName);
     setShowForm(true);
+  };
+
+  const cancelTask = () => {
+    setDoneTask(true);
+    setShowForm(false);
   };
 
   const searchTask = (event: any) => {
@@ -112,6 +120,10 @@ export default function Session() {
       setTimeout(() => {
         dispatch(setLoading(false));
         reset();
+        if (!canComplete) {
+          setCanComplete(true);
+        }
+        setDoneTask(true);
         setShowForm(false);
       }, 1000);
     });
@@ -140,97 +152,95 @@ export default function Session() {
         }
       })
       .catch((error) => console.log(error));
-    // startSession(sessionId).catch((error) => console.log(error));
+    startSession(sessionId).catch((error) => console.log(error));
   }, [counterId]);
 
   useEffect(() => {
-    // if (COMMUNICATION_SOCKET.SOCKET) {
-    //   setComSocHandler((payload: string) => {
-    //     const eventType = payload.substring(0, payload.indexOf(':'));
-    //     const dataStr = payload.substring(payload.indexOf(':') + 1);
-    //     console.log('eventType', eventType);
-    //     console.log('dataStr', dataStr);
-    //     switch (eventType) {
-    //       case 'StreamPort':
-    //         createClientSocket(
-    //           Number.parseInt(dataStr, 10),
-    //           (data: string) => {
-    //             const response = JSON.parse(data);
-    //             setShowWarning(!!response.is_warning);
-    //             setFrame(`data:image/png;base64,${response.img_src}`);
-    //           },
-    //           () => needRetryConnect.value
-    //         );
-    //         break;
-    //       case 'SessionResult':
-    //         sessionDetectedResult = JSON.parse(dataStr) as SessionDetectedInfo;
-    //         dispatch(setSessionDetectedResult(sessionDetectedResult));
-    //         if (
-    //           sessionDetectedResult &&
-    //           sessionDetectedResult.periods &&
-    //           sessionDetectedResult.periods.length > 0
-    //         ) {
-    //           sessionEmotionInfo = sessionDetectedResult.periods.map(
-    //             (ps, i) =>
-    //               ({
-    //                 emotion: i + 1,
-    //                 periods: ps.map(
-    //                   (p) =>
-    //                     ({
-    //                       duration: p.duration,
-    //                       periodStart: p.period_start,
-    //                       periodEnd: p.period_end,
-    //                     } as EmotionPeriodData)
-    //                 ),
-    //               } as EmotionData)
-    //           );
-    //           endSessionInfo = {
-    //             emotions: sessionEmotionInfo,
-    //             info: JSON.stringify(sessionDetectedResult.result),
-    //           } as EndSessionData;
-    //           endSession(sessionId, endSessionInfo)
-    //             .then(() => {
-    //               setFrame(path.join(__dirname, '../resources/video.jpg'));
-    //               setCategoryList(null);
-    //               spawn(PYTHON_VENV_PATH, [
-    //                 path.join(DETECTION_PATH, './upload.py'),
-    //                 '--fr',
-    //                 evidenceFolder.replace(/\\/g, '/'),
-    //                 '--to',
-    //                 evidenceFoldername,
-    //               ])
-    //                 .on('error', (err: Error) => {
-    //                   console.error(
-    //                     '[UPLOADER] Child process spawning error:',
-    //                     err
-    //                   );
-    //                 })
-    //                 .unref();
-    //               dispatch(setLastUpdateSession(Date.now()));
-    //               history.goBack();
-    //             })
-    //             .catch((error) => console.log(error));
-    //         }
-    //         break;
-    //       default:
-    //         break;
-    //     }
-    //   });
-    //   if (!start && !kill) {
-    //     COMMUNICATION_SOCKET.SOCKET.write(`start:${evidenceFolder}`);
-    //     setStart(true);
-    //   }
-    // }
+    if (COMMUNICATION_SOCKET.SOCKET) {
+      setComSocHandler((payload: string) => {
+        const eventType = payload.substring(0, payload.indexOf(':'));
+        const dataStr = payload.substring(payload.indexOf(':') + 1);
+        console.log('eventType', eventType);
+        console.log('dataStr', dataStr);
+        switch (eventType) {
+          case 'StreamPort':
+            createClientSocket(
+              Number.parseInt(dataStr, 10),
+              (data: string) => {
+                const response = JSON.parse(data);
+                setShowWarning(!!response.is_warning);
+                setFrame(`data:image/png;base64,${response.img_src}`);
+              },
+              () => needRetryConnect.value
+            );
+            break;
+          case 'SessionResult':
+            sessionDetectedResult = JSON.parse(dataStr) as SessionDetectedInfo;
+            dispatch(setSessionDetectedResult(sessionDetectedResult));
+            if (
+              sessionDetectedResult &&
+              sessionDetectedResult.periods &&
+              sessionDetectedResult.periods.length > 0
+            ) {
+              sessionEmotionInfo = sessionDetectedResult.periods.map(
+                (ps, i) =>
+                  ({
+                    emotion: i + 1,
+                    periods: ps.map(
+                      (p) =>
+                        ({
+                          duration: p.duration,
+                          periodStart: p.period_start,
+                          periodEnd: p.period_end,
+                        } as EmotionPeriodData)
+                    ),
+                  } as EmotionData)
+              );
+              endSessionInfo = {
+                emotions: sessionEmotionInfo,
+                info: JSON.stringify(sessionDetectedResult.result),
+              } as EndSessionData;
+              endSession(sessionId, endSessionInfo)
+                .then(() => {
+                  setFrame(path.join(__dirname, '../resources/video.jpg'));
+                  spawn(PYTHON_VENV_PATH, [
+                    path.join(DETECTION_PATH, './upload.py'),
+                    '--fr',
+                    evidenceFolder.replace(/\\/g, '/'),
+                    '--to',
+                    evidenceFoldername,
+                  ])
+                    .on('error', (err: Error) => {
+                      console.error(
+                        '[UPLOADER] Child process spawning error:',
+                        err
+                      );
+                    })
+                    .unref();
+                  dispatch(setLastUpdateSession(Date.now()));
+                  history.goBack();
+                })
+                .catch((error) => console.log(error));
+            }
+            break;
+          default:
+            break;
+        }
+      });
+      if (!start && !kill) {
+        COMMUNICATION_SOCKET.SOCKET.write(`start:${evidenceFolder}`);
+        setStart(true);
+      }
+    }
   }, [start, kill]);
 
   const handleKill = () => {
-    history.goBack();
-    // if (COMMUNICATION_SOCKET.SOCKET) {
-    //   COMMUNICATION_SOCKET.SOCKET.write('end');
-    //   setStart(false);
-    //   setKill(true);
-    // }
-    // needRetryConnect.value = false;
+    if (COMMUNICATION_SOCKET.SOCKET) {
+      COMMUNICATION_SOCKET.SOCKET.write('end');
+      setStart(false);
+      setKill(true);
+    }
+    needRetryConnect.value = false;
   };
 
   return (
@@ -251,6 +261,7 @@ export default function Session() {
           <button
             type="button"
             className={styles.completeSessionBtn}
+            disabled={!canComplete || !isDoneTask}
             onClick={() => handleKill()}
           >
             <i className="fas fa-clipboard-check" />
@@ -265,8 +276,9 @@ export default function Session() {
           </div>
           <div className={styles.angryWrapper}>
             <div className={styles.angryTitleWrapper}>
-              <span className={styles.angryTitle} />
+              <span className={styles.angryTitle}>Session Information</span>
             </div>
+            <div className={styles.angryListWrapper} />
           </div>
         </div>
         <div
@@ -313,7 +325,7 @@ export default function Session() {
                                 <span
                                   className={styles.listCategoryItemDescription}
                                 >
-                                  Subtitle here
+                                  {category.subtitle}
                                 </span>
                               </div>
                             </div>
@@ -397,7 +409,7 @@ export default function Session() {
                           <input
                             ref={register({ required: true })}
                             type="number"
-                            name="amount"
+                            name="amountF"
                             style={{ width: 200 }}
                             className={styles.fieldInput}
                           />
@@ -409,7 +421,7 @@ export default function Session() {
                           <input
                             ref={register({ required: true })}
                             type="text"
-                            name="amount"
+                            name="amountW"
                             style={{ width: '30vw' }}
                             className={styles.fieldInput}
                           />
@@ -421,7 +433,7 @@ export default function Session() {
                           <input
                             ref={register({ required: true })}
                             type="text"
-                            name="amount"
+                            name="valdate"
                             style={{ width: 200 }}
                             className={styles.fieldInput}
                           />
@@ -435,60 +447,6 @@ export default function Session() {
                     <b>BENEFICIARY DETAILS</b>
                   </span>
                   <div className={styles.formSplit}>
-                    <div
-                      className={`${styles.formBlock} ${styles.formBlockFull}`}
-                    >
-                      <div className={styles.lineWrapper}>
-                        <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>*Name:</span>
-                          <input
-                            ref={register({ required: true })}
-                            type="text"
-                            name="bname"
-                            style={{ width: '90%' }}
-                            className={styles.fieldInput}
-                          />
-                        </div>
-                        <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            Relationship with applicant:
-                          </span>
-                          <input
-                            ref={register()}
-                            type="text"
-                            name="bname"
-                            style={{ width: '90%' }}
-                            className={styles.fieldInput}
-                          />
-                        </div>
-                      </div>
-                      <div className={styles.lineWrapper}>
-                        <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            *Account Number:
-                          </span>
-                          <input
-                            ref={register({ required: true })}
-                            type="number"
-                            name="accountnumber"
-                            style={{ width: 200 }}
-                            className={styles.fieldInput}
-                          />
-                        </div>
-                      </div>
-                      <div className={styles.lineWrapper}>
-                        <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>Address:</span>
-                          <textarea
-                            ref={register()}
-                            rows={3}
-                            name="baddress"
-                            style={{ width: '100%' }}
-                            className={styles.fieldInput}
-                          />
-                        </div>
-                      </div>
-                    </div>
                     <div
                       className={`${styles.formBlock} ${styles.formBlockFull}`}
                     >
@@ -508,14 +466,54 @@ export default function Session() {
                       </div>
                       <div className={styles.lineWrapper}>
                         <div className={styles.fieldWrapper}>
+                          <span className={styles.fieldLabel}>*Name:</span>
+                          <input
+                            ref={register({ required: true })}
+                            type="text"
+                            name="bname"
+                            style={{ width: '90%' }}
+                            className={styles.fieldInput}
+                          />
+                        </div>
+                        <div className={styles.fieldWrapper}>
                           <span className={styles.fieldLabel}>
-                            Swift Code/Sort Code/Fed Wire/BSB No/BAN:
+                            *Account Number:
                           </span>
                           <input
                             ref={register({ required: true })}
                             type="number"
-                            name="swiftcode"
+                            name="baccnum"
                             style={{ width: 200 }}
+                            className={styles.fieldInput}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      className={`${styles.formBlock} ${styles.formBlockFull}`}
+                    >
+                      <div className={styles.lineWrapper}>
+                        <div className={styles.fieldWrapper}>
+                          <span className={styles.fieldLabel}>
+                            Relationship with applicant:
+                          </span>
+                          <input
+                            ref={register()}
+                            type="text"
+                            name="brelaa"
+                            style={{ width: 200 }}
+                            className={styles.fieldInput}
+                          />
+                        </div>
+                      </div>
+                      <div className={styles.lineWrapper}>
+                        <div className={styles.fieldWrapper}>
+                          <span className={styles.fieldLabel}>Address:</span>
+                          <textarea
+                            ref={register()}
+                            rows={3}
+                            name="baddress"
+                            style={{ width: '100%' }}
                             className={styles.fieldInput}
                           />
                         </div>
@@ -562,12 +560,12 @@ export default function Session() {
                       <div className={styles.lineWrapper}>
                         <div className={styles.fieldWrapper}>
                           <span className={styles.fieldLabel}>
-                            Remittance Informations:
+                            Transaction Remark:
                           </span>
-                          <input
-                            ref={register({ required: true })}
-                            type="number"
-                            name="swiftcode"
+                          <textarea
+                            ref={register()}
+                            rows={3}
+                            name="remark"
                             style={{ width: '100%' }}
                             className={styles.fieldInput}
                           />
@@ -594,7 +592,7 @@ export default function Session() {
                           ref={register()}
                           id="localRe"
                           type="checkbox"
-                          name="aname"
+                          name="local"
                           className={styles.checkboxInput}
                         />
                       </div>
@@ -608,7 +606,7 @@ export default function Session() {
                           ref={register({ required: true })}
                           id="localBe"
                           type="checkbox"
-                          name="aname"
+                          name="local"
                           className={styles.checkboxInput}
                         />
                       </div>
@@ -633,7 +631,7 @@ export default function Session() {
                           ref={register()}
                           id="overRe"
                           type="checkbox"
-                          name="aname"
+                          name="over"
                           className={styles.checkboxInput}
                         />
                       </div>
@@ -647,35 +645,9 @@ export default function Session() {
                           ref={register({ required: true })}
                           id="overBe"
                           type="checkbox"
-                          name="aname"
+                          name="over"
                           className={styles.checkboxInput}
                         />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.formBlockFull}>
-                  <span className={styles.formSubtitle}>
-                    <b>PURPOSE OF PAYMENT</b>
-                  </span>
-                  <div className={styles.formSplit}>
-                    <div
-                      className={`${styles.formBlock} ${styles.formBlockFull}`}
-                    >
-                      <div className={styles.lineWrapper}>
-                        <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            Please describe the specific goods / services /
-                            transaction for which the payment is to be made:
-                          </span>
-                          <textarea
-                            ref={register()}
-                            rows={3}
-                            name="baddress"
-                            style={{ width: '100%' }}
-                            className={styles.fieldInput}
-                          />
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -691,7 +663,7 @@ export default function Session() {
                       type="button"
                       className={styles.btnDone}
                       value="CANCEL"
-                      onClick={() => setShowForm(false)}
+                      onClick={() => cancelTask()}
                     />
                   </div>
                 </div>

@@ -9,6 +9,7 @@ export type TaskInfo = {
 export type CategoryInfo = {
   id: number;
   categoryName: string;
+  subtitle: string;
   Tasks?: TaskInfo[];
 };
 

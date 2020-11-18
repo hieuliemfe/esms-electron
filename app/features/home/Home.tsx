@@ -249,21 +249,20 @@ export default function Home() {
   }, [eviPeriods]);
 
   const startSession = (queueId: number) => {
-    history.push(routes.SESSION);
-    // dispatch(setLoading(true));
-    // assignQueue(counterId, queueId)
-    //   .then(async (assignResponse) => {
-    //     if (assignResponse.success) {
-    //       const createSessionResponse = await createSession();
-    //       if (createSessionResponse.success) {
-    //         const sessionInfo = createSessionResponse.message;
-    //         dispatch(setSessionId(sessionInfo.id));
-    //         dispatch(setLoading(false));
-    //         history.push(routes.SESSION);
-    //       }
-    //     }
-    //   })
-    //   .catch((error) => console.log(error));
+    dispatch(setLoading(true));
+    assignQueue(counterId, queueId)
+      .then(async (assignResponse) => {
+        if (assignResponse.success) {
+          const createSessionResponse = await createSession();
+          if (createSessionResponse.success) {
+            const sessionInfo = createSessionResponse.message;
+            dispatch(setSessionId(sessionInfo.id));
+            dispatch(setLoading(false));
+            history.push(routes.SESSION);
+          }
+        }
+      })
+      .catch((error) => console.log(error));
   };
 
   const checkin = (selectedShiftType: ShiftTypeInfo | undefined) => {
@@ -316,6 +315,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    dispatch(setLoading(true));
     const startDate = new Date(selectedDay);
     startDate.setHours(0);
     startDate.setMinutes(0);
@@ -333,6 +333,7 @@ export default function Home() {
           const result: GetSessionSummaryResult =
             sessionSummaryResponse.message;
           if (result) {
+            dispatch(setLoading(false));
             setSessionList(result.sessions);
           }
         }
@@ -664,6 +665,7 @@ export default function Home() {
                     selected={selectedDay}
                     popperPlacement="bottom-start"
                     onChange={(date) => setSelectedDay(date as Date)}
+                    maxDate={new Date()}
                     dateFormat="MMM dd, yyyy"
                     customInput={<DateButton />}
                   />
