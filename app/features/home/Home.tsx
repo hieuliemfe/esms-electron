@@ -65,7 +65,17 @@ import { setSessionId } from '../session/sessionSlice';
 import { setToken as setRequestToken } from '../../utils/request';
 import styles from './Home.css';
 
-const fourDigits = (num: number | string) => `${`000${num}`.substr(-4)}`;
+const twoDigits = (num: number | string) => `${`0${num}`.substr(-2)}`;
+
+const fourDigits = (num: number | string) =>
+  num > 999 ? num : `${`000${num}`.substr(-4)}`;
+
+const getClientTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return `${twoDigits(date.getHours())}:${twoDigits(
+    date.getMinutes()
+  )}:${twoDigits(date.getSeconds())}`;
+};
 
 const getLocalEviPath = (sessionId: number) =>
   path.join(__dirname, `../evidences/session_${fourDigits(sessionId)}`);
@@ -239,20 +249,21 @@ export default function Home() {
   }, [eviPeriods]);
 
   const startSession = (queueId: number) => {
-    dispatch(setLoading(true));
-    assignQueue(counterId, queueId)
-      .then(async (assignResponse) => {
-        if (assignResponse.success) {
-          const createSessionResponse = await createSession();
-          if (createSessionResponse.success) {
-            const sessionInfo = createSessionResponse.message;
-            dispatch(setSessionId(sessionInfo.id));
-            dispatch(setLoading(false));
-            history.push(routes.SESSION);
-          }
-        }
-      })
-      .catch((error) => console.log(error));
+    history.push(routes.SESSION);
+    // dispatch(setLoading(true));
+    // assignQueue(counterId, queueId)
+    //   .then(async (assignResponse) => {
+    //     if (assignResponse.success) {
+    //       const createSessionResponse = await createSession();
+    //       if (createSessionResponse.success) {
+    //         const sessionInfo = createSessionResponse.message;
+    //         dispatch(setSessionId(sessionInfo.id));
+    //         dispatch(setLoading(false));
+    //         history.push(routes.SESSION);
+    //       }
+    //     }
+    //   })
+    //   .catch((error) => console.log(error));
   };
 
   const checkin = (selectedShiftType: ShiftTypeInfo | undefined) => {
@@ -522,10 +533,7 @@ export default function Home() {
               </span>
               <div className={styles.waitingList}>
                 {queueList && queueList.length > 0 ? (
-                  <div
-                    className={styles.waitingInner}
-                    style={{ width: 40 + 210 * queueList.length }}
-                  >
+                  <div className={styles.waitingInner}>
                     {queueList.map((queue: QueueInfo) => (
                       <div className={styles.waitingItem} key={queue.id}>
                         <div className={styles.waitingItemHead}>
@@ -662,10 +670,7 @@ export default function Home() {
                 </div>
                 <div className={styles.sessionList}>
                   {sessionList && sessionList.length > 0 ? (
-                    <div
-                      className={styles.sessionInner}
-                      style={{ width: 40 + 230 * sessionList.length }}
-                    >
+                    <div className={styles.sessionInner}>
                       {sessionList.map((session: SessionInfo) => (
                         <div className={styles.sessionItem} key={session.id}>
                           <div
@@ -683,10 +688,13 @@ export default function Home() {
                             </span>
                             <span />
                             <span className={styles.stime}>
+                              {`Time: ${getClientTime(session.sessionStart)}`}
+                            </span>
+                            <span className={styles.stime}>
                               {`Duration: ${msToStr(session.sessionDuration)}`}
                             </span>
                             <span className={styles.stime}>
-                              {`Angry Warnings: ${session.angryWarningCount}`}
+                              {`Angries: ${session.angryWarningCount}`}
                             </span>
                           </div>
                         </div>

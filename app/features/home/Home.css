@@ -430,27 +430,27 @@ span.waitingListTitle {
 
 .waitingList {
   height: 100%;
-  overflow-x: auto;
 }
 
 .waitingInner {
-  display: block;
-  padding: 20px;
+  display: flex;
+  padding: 20px 0 20px 20px;
   flex: auto;
   height: 100%;
+  overflow: auto;
 }
 
 .waitingInner::after {
   display: block;
   content: '';
-  clear: both;
+  padding: 0 1px 0 0;
 }
 
 .waitingItem {
-  float: left;
   display: flex;
   flex-direction: column;
   width: 180px;
+  min-width: 180px;
   height: 100%;
   margin-right: 30px;
   background-color: #fff;
@@ -510,7 +510,7 @@ span.waitingListTitle {
   font-size: 16px;
   padding: 0 12px;
   background-color: #1479ff;
-  color: #ffffff;
+  color: #fff;
 }
 
 .waitingItemHead i.skipIcon {
@@ -826,7 +826,6 @@ span.angryPeriodsTitle {
 .sessionList {
   width: 100%;
   flex: auto;
-  overflow-x: auto;
 }
 
 .footerTailWrapper.showVideo .videoWrapper {
@@ -838,23 +837,24 @@ span.angryPeriodsTitle {
 }
 
 .sessionInner {
-  display: block;
+  display: flex;
   padding: 20px;
   flex: auto;
   height: 100%;
+  overflow: auto;
 }
 
 .sessionInner::after {
   display: block;
   content: '';
-  clear: both;
+  padding: 0 1px 0 0;
 }
 
 .sessionItem {
-  float: left;
   display: flex;
   flex-direction: column;
   width: 200px;
+  min-width: 200px;
   height: 100%;
   margin-right: 30px;
   background-color: #fff;
