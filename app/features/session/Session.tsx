@@ -218,6 +218,7 @@ export default function Session() {
                     })
                     .unref();
                   dispatch(setLastUpdateSession(Date.now()));
+                  dispatch(setLoading(false));
                   history.goBack();
                 })
                 .catch((error) => console.log(error));
@@ -235,6 +236,7 @@ export default function Session() {
   }, [start, kill]);
 
   const handleKill = () => {
+    dispatch(setLoading(true));
     if (COMMUNICATION_SOCKET.SOCKET) {
       COMMUNICATION_SOCKET.SOCKET.write('end');
       setStart(false);
