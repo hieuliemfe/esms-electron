@@ -9,7 +9,7 @@ export type CounterInfo = {
 };
 
 type GetCounterInfo = {
-  counter: CounterInfo;
+  counters: CounterInfo;
 };
 
 type GetCounterResponse = EsmsResponse<GetCounterInfo>;

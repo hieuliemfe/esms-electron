@@ -133,10 +133,11 @@ export default function Session() {
     dispatch(setLoading(true));
     getCounter(counterId)
       .then(async (getCounterResponse) => {
+        console.log('getCounterResponse', getCounterResponse);
         if (getCounterResponse.success) {
-          const { counter } = getCounterResponse.message;
-          if (counter) {
-            const catList: CategoryInfo[] | undefined = counter.Categories;
+          const { counters } = getCounterResponse.message;
+          if (counters) {
+            const catList: CategoryInfo[] | undefined = counters.Categories;
             if (catList && catList.length > 0) {
               let tsList: TaskInfo[] = [];
               catList.forEach((cat) => {
@@ -147,6 +148,7 @@ export default function Session() {
               setCategoryList(catList);
               setTaskList(tsList);
               dispatch(setLoading(false));
+              console.log('hello');
             }
           }
         }
