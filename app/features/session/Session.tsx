@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import path from 'path';
-import { spawn } from 'child_process';
+import child_process from 'child_process';
 import {
   startSession,
   endSession,
@@ -40,6 +40,35 @@ import {
 import styles from './Session.css';
 
 const fourDigits = (num: number | string) => `${`000${num}`.substr(-4)}`;
+
+const daemon = (script: any, args: any, option?: any) => {
+  const opt = option || {};
+
+  const stdout = opt.stdout || 'ignore';
+  const stderr = opt.stderr || 'ignore';
+
+  const env = opt.env || process.env;
+  const cwd = opt.cwd || process.cwd;
+
+  const cpOpt = {
+    stdio: ['ignore', stdout, stderr],
+    env,
+    cwd,
+    detached: true,
+  };
+
+  // spawn the child using the same node process as ours
+  const child = child_process.spawn(
+    process.execPath,
+    [script].concat(args),
+    cpOpt
+  );
+
+  // required so the parent can exit
+  child.unref();
+
+  return child;
+};
 
 export default function Session() {
   const dispatch = useDispatch();
@@ -205,7 +234,7 @@ export default function Session() {
               endSession(sessionId, endSessionInfo)
                 .then(() => {
                   setFrame(path.join(__dirname, '../resources/video.jpg'));
-                  spawn(PYTHON_VENV_PATH, [
+                  daemon(PYTHON_VENV_PATH, [
                     path.join(DETECTION_PATH, './upload.py'),
                     '--fr',
                     evidenceFolder.replace(/\\/g, '/'),
@@ -220,6 +249,7 @@ export default function Session() {
                     })
                     .unref();
                   dispatch(setLastUpdateSession(Date.now()));
+                  dispatch(setLoading(false));
                   history.goBack();
                 })
                 .catch((error) => console.log(error));
@@ -237,6 +267,7 @@ export default function Session() {
   }, [start, kill]);
 
   const handleKill = () => {
+    dispatch(setLoading(true));
     if (COMMUNICATION_SOCKET.SOCKET) {
       COMMUNICATION_SOCKET.SOCKET.write('end');
       setStart(false);
