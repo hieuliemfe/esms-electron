@@ -1,3 +1,4 @@
+/* eslint-disable promise/always-return */
 /* eslint-disable jsx-a11y/no-autofocus */
 import React from 'react';
 import { useDispatch } from 'react-redux';
@@ -9,7 +10,10 @@ import routes from '../../constants/routes.json';
 import { login, getProfile, ProfileInfo } from '../../services/root';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import { setToken, setUserProfile, setCounterId } from './loginSlice';
-import { setToken as setRequestToken } from '../../utils/request';
+import {
+  setToken as setRequestToken,
+  ResponseError,
+} from '../../utils/request';
 import styles from './Login.css';
 
 export default function Login() {
@@ -39,7 +43,26 @@ export default function Login() {
         }
       }
     } catch (error) {
-      ipcRenderer.send('login-failed');
+      const resErr: ResponseError = error as ResponseError;
+      resErr.response
+        .json()
+        .then((dataErr) => {
+          const empErr = dataErr.message;
+          if (typeof empErr === 'string') {
+            ipcRenderer.send('login-failed', empErr);
+          } else {
+            const { suspensions } = empErr;
+            if (suspensions && suspensions[0]) {
+              const suspension = suspensions[0];
+              const expiration = new Date(suspension.expiredOn);
+              const message = `Your account is temporarily suspended until ${expiration.getDate()}/${
+                expiration.getMonth() + 1
+              }/${expiration.getFullYear()} at ${expiration.getHours()}:${expiration.getMinutes()}:${expiration.getSeconds()} due to some of your improper behavior. You should take a break and come back later!`;
+              ipcRenderer.send('login-failed', message);
+            }
+          }
+        })
+        .catch(console.log);
     } finally {
       dispatch(setLoading(false));
     }

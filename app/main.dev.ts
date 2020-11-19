@@ -131,11 +131,11 @@ const createWindows = async () => {
  * Add event listeners...
  */
 
-ipcMain.on('login-failed', () => {
-  if (mainWindow) {
+ipcMain.on('login-failed', (event: IpcMainEvent, message: string) => {
+  if (event && message && mainWindow) {
     dialog.showMessageBoxSync(mainWindow, {
       title: 'Login FAILED',
-      message: 'Invalid Employee Code or Password',
+      message,
       type: 'error',
     });
   }
