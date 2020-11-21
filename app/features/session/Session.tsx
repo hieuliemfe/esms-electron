@@ -86,20 +86,16 @@ export default function Session() {
   const [isShowForm, setShowForm] = useState(false);
   const { register, handleSubmit, reset } = useForm();
   const [isShowWarning, setShowWarning] = useState(false);
-  const [canComplete, setCanComplete] = useState(false);
-  const [isDoneTask, setDoneTask] = useState(true);
   let sessionDetectedResult: SessionDetectedInfo;
   let sessionEmotionInfo: EmotionData[] = [];
   let endSessionInfo: EndSessionData;
 
   const selectTask = (taskName: string) => {
-    setDoneTask(false);
     setSelectedTaskName(taskName);
     setShowForm(true);
   };
 
   const cancelTask = () => {
-    setDoneTask(true);
     setShowForm(false);
   };
 
@@ -133,10 +129,6 @@ export default function Session() {
       setTimeout(() => {
         dispatch(setLoading(false));
         reset();
-        if (!canComplete) {
-          setCanComplete(true);
-        }
-        setDoneTask(true);
         setShowForm(false);
       }, 1000);
     });
@@ -272,7 +264,6 @@ export default function Session() {
           <button
             type="button"
             className={styles.completeSessionBtn}
-            disabled={!canComplete || !isDoneTask}
             onClick={() => handleKill()}
           >
             <i className="fas fa-clipboard-check" />
