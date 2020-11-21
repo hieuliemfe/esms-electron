@@ -1,5 +1,4 @@
 /* eslint-disable import/no-dynamic-require */
-/* eslint-disable promise/always-return */
 /* eslint global-require: off, no-console: off */
 
 /**
@@ -24,6 +23,7 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { generateV4ReadSignedUrl } from './services/google-cloud';
+import runChildProcess, { DETECTION_PATH } from './socket.dev';
 // import MenuBuilder from './menu';
 
 export default class AppUpdater {
@@ -152,6 +152,7 @@ ipcMain.on(
   (event: IpcMainEvent, objName: string, filePath: string) => {
     if (event && objName && filePath) {
       generateV4ReadSignedUrl(filePath)
+        // eslint-disable-next-line promise/always-return
         .then((url: string) => {
           event.sender.send('signed-url', objName, url);
         })
@@ -176,7 +177,16 @@ ipcMain.on('logout', () => {
   }
 });
 
+process.env.OPENH264_LIBRARY = path.join(
+  DETECTION_PATH,
+  process.env.OPENH264_LIBRARY as string
+);
+
+const CHILD_PROCESS = runChildProcess();
+
 app.on('window-all-closed', () => {
+  CHILD_PROCESS.kill('SIGTERM');
+  console.log('CHILD_PROCESS is killed with SIGTERM');
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {

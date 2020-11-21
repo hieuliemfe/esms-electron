@@ -28,8 +28,8 @@
     "prestart": "yarn build",
     "start": "cross-env NODE_ENV=production electron ./app/main.prod.js",
     "start-main-debug": "yarn start-main-dev --inspect=5858 --remote-debugging-port=9223",
-    "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
-    "start-renderer-dev": "cross-env NODE_ENV=development webpack-dev-server --config configs/webpack.config.renderer.dev.babel.js"
+    "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development OPENH264_LIBRARY=codec/openh264-1.8.0-win64.dll electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
+    "start-renderer-dev": "cross-env NODE_ENV=development OPENH264_LIBRARY=codec/openh264-1.8.0-win64.dll webpack-dev-server --config configs/webpack.config.renderer.dev.babel.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -183,7 +183,7 @@
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/history": "^4.7.7",
     "@types/jest": "^26.0.10",
-    "@types/node": "12",
+    "@types/node": "^14.14.9",
     "@types/react": "^16.9.44",
     "@types/react-datepicker": "^3.1.1",
     "@types/react-dom": "^16.9.8",
