@@ -218,6 +218,7 @@ export default function Session() {
                     evidenceFoldername,
                   ]);
                   console.log(childpro);
+                  needRetryConnect.value = false;
                   dispatch(setLastUpdateSession(Date.now()));
                   dispatch(setLoading(false));
                   history.goBack();
@@ -243,7 +244,6 @@ export default function Session() {
       setStart(false);
       setKill(true);
     }
-    needRetryConnect.value = false;
   };
 
   return (
