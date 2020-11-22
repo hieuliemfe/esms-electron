@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../../store';
 
 type AngryPeriod = {
+  no: number;
   duration: number;
   emotion: number;
   period_start: number;

@@ -600,7 +600,7 @@ export default function Home() {
                       <div className={styles.angryPeriodsInnerInner}>
                         {isShowEvi ? (
                           <div className={styles.angryPeriods}>
-                            {eviPeriods[periodEviName].map((period, ind) => (
+                            {eviPeriods[periodEviName].map((period) => (
                               <div
                                 className={styles.periodItem}
                                 key={period.period_start}
@@ -611,7 +611,7 @@ export default function Home() {
                                 <div className={styles.periodHead}>
                                   <i className="fas fa-history" />
                                   <span className={styles.periodName}>
-                                    {`P${fourDigits(ind + 1)}`}
+                                    {`P${fourDigits(period.no)}`}
                                   </span>
                                 </div>
                                 <div className={styles.periodTail}>

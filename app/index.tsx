@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable promise/always-return */
 import React, { Fragment } from 'react';
 import { render } from 'react-dom';
@@ -29,7 +30,16 @@ ipcRenderer.on('signed-url', (event, objName, url) => {
         request
           .get(resourcePath, undefined, false, GCS_ENDPOINT)
           .then((json) => {
-            store.dispatch(addEviPeriod({ [realName]: json }));
+            console.log('json', json);
+            let arrPeriod: any[] = json as any[];
+            if (arrPeriod && arrPeriod.length > 0) {
+              arrPeriod = arrPeriod.filter((e) => e.duration > 1000);
+              arrPeriod.forEach((e, i) => {
+                e.no = i + 1;
+              });
+              arrPeriod = arrPeriod.sort((a, b) => b.duration - a.duration);
+            }
+            store.dispatch(addEviPeriod({ [realName]: arrPeriod }));
           })
           .catch(console.log);
       }
