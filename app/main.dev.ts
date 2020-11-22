@@ -138,6 +138,7 @@ ipcMain.on('login-failed', (event: IpcMainEvent, message: string) => {
       message,
       type: 'error',
     });
+    event.sender.send('login-failed-dialog-closed');
   }
 });
 
@@ -185,8 +186,13 @@ process.env.OPENH264_LIBRARY = path.join(
 const CHILD_PROCESS = runChildProcess();
 
 app.on('window-all-closed', () => {
+  console.log('[CHILD_PROCESS]: pid=', CHILD_PROCESS.pid);
+  console.log('[CHILD_PROCESS]: spawnfile=', CHILD_PROCESS.spawnfile);
+  console.log('[CHILD_PROCESS]: spawnargs=', CHILD_PROCESS.spawnargs);
+  console.log('[CHILD_PROCESS]: killed=', CHILD_PROCESS.killed);
   CHILD_PROCESS.kill('SIGTERM');
-  console.log('CHILD_PROCESS is killed with SIGTERM');
+  console.log('[CHILD_PROCESS]: killed with SIGTERM');
+  console.log('[CHILD_PROCESS]: killed=', CHILD_PROCESS.killed);
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {

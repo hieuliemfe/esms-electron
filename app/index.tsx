@@ -4,6 +4,7 @@ import React, { Fragment } from 'react';
 import { render } from 'react-dom';
 import { AppContainer as ReactHotAppContainer } from 'react-hot-loader';
 import { ipcRenderer } from 'electron';
+import routes from './constants/routes.json';
 import { history, configuredStore } from './store';
 import {
   COMMUNICATION_SOCKET,
@@ -51,6 +52,16 @@ ipcRenderer.on('signed-url', (event, objName, url) => {
 ipcRenderer.on('retrieved-result', (event, objName, result) => {
   if (event && objName && result) {
     store.dispatch(addEviPeriod({ [objName]: result }));
+  }
+});
+
+ipcRenderer.on('login-failed-dialog-closed', (event) => {
+  if (event) {
+    const isRelaxMode = store.getState().login.relaxMode;
+    if (isRelaxMode) {
+      ipcRenderer.send('login-success');
+      history.push(routes.HOME);
+    }
   }
 });
 

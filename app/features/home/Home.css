@@ -181,11 +181,17 @@
   position: absolute;
   top: 0;
   right: 0;
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 25vw;
   padding: 50px 0 0 50px;
   height: 100%;
   overflow: hidden;
+}
+
+.shiftListWrapper.show.relaxMode,
+.shiftListWrapper.show.relaxMode .shiftListInner {
+  width: 30vw;
 }
 
 .shiftListTitle {
@@ -195,10 +201,29 @@
 }
 
 .shiftList {
+  flex: auto;
   display: flex;
   padding-top: 20px;
   flex-direction: column;
   align-items: center;
+}
+
+.behaviorTitle {
+  width: 100%;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.behaviorWrapper {
+  flex: auto;
+  display: block;
+  padding-top: 20px;
+}
+
+.behaviorWrapper iframe {
+  width: calc(30vw - 50px);
+  height: calc(30vw * 0.6 - 50px * 0.6);
+  max-height: 100%;
 }
 
 .shiftItem {

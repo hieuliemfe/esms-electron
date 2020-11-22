@@ -10,6 +10,7 @@ const loginSlice = createSlice({
     userProfile: {} as ProfileInfo,
     counterId: 0,
     shiftId: 0,
+    relaxMode: false,
   },
   reducers: {
     setToken: (state, { payload }) => {
@@ -24,6 +25,9 @@ const loginSlice = createSlice({
     setShiftId: (state, { payload }) => {
       state.shiftId = payload;
     },
+    setRelaxMode: (state, { payload }) => {
+      state.relaxMode = payload;
+    },
   },
 });
 
@@ -32,6 +36,7 @@ export const {
   setUserProfile,
   setCounterId,
   setShiftId,
+  setRelaxMode,
 } = loginSlice.actions;
 
 export default loginSlice.reducer;
@@ -43,3 +48,5 @@ export const selectUserProfile = (state: RootState) => state.login.userProfile;
 export const selectCounterId = (state: RootState) => state.login.counterId;
 
 export const selectShiftId = (state: RootState) => state.login.shiftId;
+
+export const selectRelaxMode = (state: RootState) => state.login.relaxMode;

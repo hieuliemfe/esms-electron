@@ -1,4 +1,3 @@
-/* eslint-disable promise/always-return */
 /* eslint-disable jsx-a11y/no-autofocus */
 import React from 'react';
 import { useDispatch } from 'react-redux';
@@ -9,12 +8,19 @@ import { useHistory } from 'react-router-dom';
 import routes from '../../constants/routes.json';
 import { login, getProfile, ProfileInfo } from '../../services/root';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
-import { setToken, setUserProfile, setCounterId } from './loginSlice';
+import {
+  setToken,
+  setUserProfile,
+  setCounterId,
+  setRelaxMode,
+} from './loginSlice';
 import {
   setToken as setRequestToken,
   ResponseError,
 } from '../../utils/request';
 import styles from './Login.css';
+
+const twoDigits = (num: number | string) => `${`0${num}`.substr(-2)}`;
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -35,34 +41,49 @@ export default function Login() {
           const profileResponse = await getProfile();
           if (profileResponse.success) {
             const profileInfo: ProfileInfo = profileResponse.message;
-            ipcRenderer.send('login-success');
             dispatch(setUserProfile(profileInfo));
             dispatch(setCounterId(profileInfo.counterId));
+            ipcRenderer.send('login-success');
             history.push(routes.HOME);
           }
         }
       }
     } catch (error) {
       const resErr: ResponseError = error as ResponseError;
-      resErr.response
-        .json()
-        .then((dataErr) => {
-          const empErr = dataErr.message;
-          if (typeof empErr === 'string') {
-            ipcRenderer.send('login-failed', empErr);
-          } else {
-            const { suspensions } = empErr;
-            if (suspensions && suspensions[0]) {
-              const suspension = suspensions[0];
-              const expiration = new Date(suspension.expiredOn);
-              const message = `Your account is temporarily suspended until ${expiration.getDate()}/${
-                expiration.getMonth() + 1
-              }/${expiration.getFullYear()} at ${expiration.getHours()}:${expiration.getMinutes()}:${expiration.getSeconds()} due to some of your improper behavior. You should take a break and come back later!`;
-              ipcRenderer.send('login-failed', message);
-            }
+      const dataErr = await resErr.response.json();
+      const { token } = dataErr;
+      const empErr = dataErr.message;
+      if (typeof empErr === 'string') {
+        ipcRenderer.send('login-failed', empErr);
+      } else {
+        dispatch(setToken(token));
+        setRequestToken(token);
+        console.log('token', token);
+        console.log('empErr', empErr);
+
+        const profileResponse = await getProfile();
+        if (profileResponse.success) {
+          const profileInfo: ProfileInfo = profileResponse.message;
+          dispatch(setUserProfile(profileInfo));
+          dispatch(setCounterId(profileInfo.counterId));
+          const { suspensions } = empErr;
+          if (suspensions && suspensions[0]) {
+            const suspension = suspensions[0];
+            const expiration = new Date(suspension.expiredOn);
+            const message = `Your account is temporarily suspended until ${twoDigits(
+              expiration.getDate()
+            )}/${twoDigits(
+              expiration.getMonth() + 1
+            )}/${expiration.getFullYear()} at ${twoDigits(
+              expiration.getHours()
+            )}:${twoDigits(expiration.getMinutes())}:${twoDigits(
+              expiration.getSeconds()
+            )} due to some of your improper behavior. You should take a break and come back later!`;
+            dispatch(setRelaxMode(true));
+            ipcRenderer.send('login-failed', message);
           }
-        })
-        .catch(console.log);
+        }
+      }
     } finally {
       dispatch(setLoading(false));
     }

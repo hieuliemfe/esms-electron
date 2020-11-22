@@ -57,9 +57,12 @@ import {
   selectUserProfile,
   selectCounterId,
   selectShiftId,
+  selectRelaxMode,
   setToken,
+  setUserProfile,
   setCounterId,
   setShiftId,
+  setRelaxMode,
 } from '../login/loginSlice';
 import { setSessionId } from '../session/sessionSlice';
 import { setToken as setRequestToken } from '../../utils/request';
@@ -146,6 +149,7 @@ export default function Home() {
   const logo = path.join(__dirname, '../resources/esms_logo200.png');
   const isShowShiftList = useSelector(selectIsShowShiftList);
   const isCheckedIn = useSelector(selectIsCheckedIn);
+  const isRelaxMode = useSelector(selectRelaxMode);
   const shiftId = useSelector(selectShiftId);
   const counterId = useSelector(selectCounterId);
   const lastUpdateSession = useSelector(selectLastUpdateSession);
@@ -299,7 +303,9 @@ export default function Home() {
   };
 
   const toggleShowShiftList = () => {
-    dispatch(setShowShiftList(!isShowShiftList));
+    if (!isRelaxMode) {
+      dispatch(setShowShiftList(!isShowShiftList));
+    }
   };
 
   const logout = () => {
@@ -309,6 +315,9 @@ export default function Home() {
     dispatch(setShiftId(0));
     dispatch(setToken(''));
     dispatch(setCheckedIn(false));
+    dispatch(setUserProfile({}));
+    dispatch(setShowShiftList(true));
+    dispatch(setRelaxMode(false));
     ipcRenderer.send('logout');
     dispatch(setLoading(false));
     history.push('/');
@@ -415,13 +424,19 @@ export default function Home() {
           <div
             className={`${styles.btnNav} ${
               isShowShiftList ? styles.active : ''
-            }`}
+            } ${isRelaxMode ? styles.noHover : ''}`}
             onClick={() => toggleShowShiftList()}
           >
             <div className={styles.iconBox}>
-              <i className="far fa-calendar-alt" />
+              {isRelaxMode ? (
+                <i className="fas fa-book-reader" />
+              ) : (
+                <i className="far fa-calendar-alt" />
+              )}
             </div>
-            <span className={styles.btnText}>Shifts</span>
+            <span className={styles.btnText}>
+              {`${isRelaxMode ? 'Guideline' : 'Shifts'}`}
+            </span>
           </div>
           <div className={styles.btnNav} onClick={() => logout()}>
             <div className={styles.iconBox}>
@@ -445,58 +460,90 @@ export default function Home() {
       <div
         className={`${styles.shiftListWrapper} ${
           isShowShiftList ? styles.show : ''
-        }`}
+        } ${isRelaxMode ? styles.relaxMode : ''}`}
       >
         <div className={styles.shiftListInner}>
-          <span className={styles.shiftListTitle}>Today shifts</span>
-          <div className={styles.shiftList}>
-            {shiftList && shiftList.length > 0 ? (
-              shiftList.map((sh: ShiftTypeInfo) => (
-                <div
-                  className={`${styles.shiftItem} ${
-                    sh.isActive
-                      ? styles.active
-                      : sh.isOver
-                      ? styles.inactive
-                      : isCheckedIn
-                      ? styles.unavailable
-                      : ''
-                  }`}
-                  key={sh.id}
-                >
-                  <div className={styles.shiftHead}>
-                    <i className="far fa-clock" />
-                    <span className={styles.shiftName}>{sh.name}</span>
-                  </div>
-                  <div className={styles.shiftTail}>
-                    <span className={styles.startTime}>{sh.shiftStart}</span>
-                    <span className={styles.endTime}>{sh.shiftEnd}</span>
-                    {!isCheckedIn && sh.isToCheckIn ? (
-                      <div
-                        className={styles.shiftBtn}
-                        onClick={() => checkin(sh)}
-                      >
-                        Check in
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <></>
-            )}
-          </div>
-          {isCheckedIn ? (
+          {isRelaxMode ? (
             <>
-              <div className={styles.shiftSeparator} />
-              <div className={styles.btnEndShift} onClick={() => checkout()}>
-                <span>Check Out Shift</span>
+              <span className={styles.shiftListTitle}>Behavior guideline</span>
+              <div className={styles.behaviorWrapper}>
+                <iframe
+                  title="BehaviorGuideline"
+                  src="https://www.youtube.com/embed/VUvI0gQmlho"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <span className={styles.behaviorTitle}>Relax video</span>
+              <div className={styles.behaviorWrapper}>
+                <iframe
+                  title="RelaxVideo"
+                  src="https://www.youtube.com/embed/9Q634rbsypE"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
               </div>
             </>
           ) : (
-            <></>
+            <>
+              <span className={styles.shiftListTitle}>Today shifts</span>
+              <div className={styles.shiftList}>
+                {shiftList && shiftList.length > 0 ? (
+                  shiftList.map((sh: ShiftTypeInfo) => (
+                    <div
+                      className={`${styles.shiftItem} ${
+                        sh.isActive
+                          ? styles.active
+                          : sh.isOver
+                          ? styles.inactive
+                          : isCheckedIn
+                          ? styles.unavailable
+                          : ''
+                      }`}
+                      key={sh.id}
+                    >
+                      <div className={styles.shiftHead}>
+                        <i className="far fa-clock" />
+                        <span className={styles.shiftName}>{sh.name}</span>
+                      </div>
+                      <div className={styles.shiftTail}>
+                        <span className={styles.startTime}>
+                          {sh.shiftStart}
+                        </span>
+                        <span className={styles.endTime}>{sh.shiftEnd}</span>
+                        {!isCheckedIn && sh.isToCheckIn ? (
+                          <div
+                            className={styles.shiftBtn}
+                            onClick={() => checkin(sh)}
+                          >
+                            Check in
+                          </div>
+                        ) : (
+                          <></>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <></>
+                )}
+              </div>
+              {isCheckedIn ? (
+                <>
+                  <div className={styles.shiftSeparator} />
+                  <div
+                    className={styles.btnEndShift}
+                    onClick={() => checkout()}
+                  >
+                    <span>Check Out Shift</span>
+                  </div>
+                </>
+              ) : (
+                <></>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -517,7 +564,11 @@ export default function Home() {
                 </span>
                 <span className={styles.tips}>Have a nice day!</span>
                 <span className={styles.tips}>
-                  Please check in your shift to start working!
+                  {`${
+                    isRelaxMode
+                      ? 'You are in Relax Mode. Please take a break and enjoy it.'
+                      : 'Please check in your shift to start working!'
+                  }`}
                 </span>
               </div>
               <img src={logo} alt="ESMSLogo" className={styles.greetingLogo} />
