@@ -45,7 +45,7 @@
 
 .btnNav {
   display: flex;
-  margin-top: 40px;
+  margin-top: 30px;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
