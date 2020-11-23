@@ -36,6 +36,7 @@ import {
 import {
   createSession,
   getSessionSummary,
+  availableSessionDate,
   GetSessionSummaryData,
   GetSessionSummaryResult,
   SessionInfo,
@@ -406,6 +407,7 @@ export default function Home() {
         }
       })
       .catch(console.log);
+    // availableSessionDate()
   }, [isCheckedIn]);
 
   return (
