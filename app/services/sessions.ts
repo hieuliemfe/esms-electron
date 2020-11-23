@@ -102,7 +102,7 @@ export async function endSession(
   }) as Promise<EndSessionResponse>;
 }
 
-type AvailableSessionDateData = {
+export type AvailableSessionDateData = {
   employeeCode: string;
   startDate: string;
   endDate: string;
@@ -117,7 +117,7 @@ type AvailableSessionDateResponse = EsmsResponse<AvailableSessionDateInfo>;
 export async function availableSessionDate(
   availableSessionDateData: AvailableSessionDateData
 ): Promise<AvailableSessionDateResponse> {
-  return request.put(
+  return request.get(
     `/sessions/available?${objToParamStr(availableSessionDateData)}`
   ) as Promise<AvailableSessionDateResponse>;
 }

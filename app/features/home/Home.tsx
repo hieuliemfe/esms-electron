@@ -40,6 +40,7 @@ import {
   GetSessionSummaryData,
   GetSessionSummaryResult,
   SessionInfo,
+  AvailableSessionDateData,
 } from '../../services/sessions';
 import {
   selectEviVideos,
@@ -59,11 +60,12 @@ import {
   selectCounterId,
   selectShiftId,
   selectRelaxMode,
-  setToken,
+  selectToken,
   setUserProfile,
   setCounterId,
   setShiftId,
   setRelaxMode,
+  setToken,
 } from '../login/loginSlice';
 import { setSessionId } from '../session/sessionSlice';
 import { setToken as setRequestToken } from '../../utils/request';
@@ -151,6 +153,7 @@ export default function Home() {
   const isShowShiftList = useSelector(selectIsShowShiftList);
   const isCheckedIn = useSelector(selectIsCheckedIn);
   const isRelaxMode = useSelector(selectRelaxMode);
+  const userToken = useSelector(selectToken);
   const shiftId = useSelector(selectShiftId);
   const counterId = useSelector(selectCounterId);
   const lastUpdateSession = useSelector(selectLastUpdateSession);
@@ -163,6 +166,8 @@ export default function Home() {
   const [sessionList, setSessionList] = useState<SessionInfo[] | null>(null);
   const videoPlayer = React.createRef() as React.RefObject<HTMLVideoElement>;
   const [selectedDay, setSelectedDay] = useState(new Date());
+  const [minDate, setMinDate] = useState(new Date());
+  const [excludeDates, setExcludeDates] = useState<Date[]>([]);
 
   const skipCustomer = (queueId: number) => {
     dispatch(setLoading(true));
@@ -407,8 +412,62 @@ export default function Home() {
         }
       })
       .catch(console.log);
-    // availableSessionDate()
   }, [isCheckedIn]);
+
+  useEffect(() => {
+    const currentDate = new Date();
+    currentDate.setMilliseconds(0);
+    currentDate.setSeconds(0);
+    currentDate.setMinutes(0);
+    currentDate.setHours(0);
+    const startDate = new Date(currentDate);
+    if (currentDate.getDate() > 15) {
+      startDate.setDate(15);
+    } else {
+      startDate.setDate(1);
+    }
+    setMinDate(startDate);
+    const availableSessionDateData: AvailableSessionDateData = {
+      employeeCode: profile.employeeCode,
+      startDate: startDate.toJSON(),
+      endDate: currentDate.toJSON(),
+    };
+    availableSessionDate(availableSessionDateData)
+      .then((availableSessionDateResponse) => {
+        if (availableSessionDateResponse.success) {
+          const availableList = availableSessionDateResponse.message;
+          if (availableList) {
+            const dateList = Object.keys(availableList);
+            if (dateList.length > 0) {
+              const exDates: Date[] = [];
+              let slDate = new Date();
+              // eslint-disable-next-line no-plusplus
+              for (let i = 0; i < dateList.length; i++) {
+                const date = dateList[i];
+                if (Object.prototype.hasOwnProperty.call(availableList, date)) {
+                  const sessionCount = availableList[date];
+                  if (sessionCount === 0) {
+                    exDates.push(
+                      new Date(
+                        `${date.split('-').reverse().join('-')}T00:00:00`
+                      )
+                    );
+                  } else {
+                    slDate = new Date(
+                      `${date.split('-').reverse().join('-')}T00:00:00`
+                    );
+                  }
+                }
+              }
+              console.log('exDates', exDates);
+              setExcludeDates(exDates);
+              setSelectedDay(slDate);
+            }
+          }
+        }
+      })
+      .catch(console.log);
+  }, [userToken]);
 
   return (
     <div className={styles.container}>
@@ -719,6 +778,8 @@ export default function Home() {
                     popperPlacement="bottom-start"
                     onChange={(date) => setSelectedDay(date as Date)}
                     maxDate={new Date()}
+                    minDate={minDate}
+                    excludeDates={excludeDates}
                     dateFormat="MMM dd, yyyy"
                     customInput={<DateButton />}
                   />
