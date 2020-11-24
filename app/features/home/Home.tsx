@@ -48,6 +48,8 @@ import {
   selectIsShowShiftList,
   selectIsCheckedIn,
   selectLastUpdateSession,
+  setEviVideo,
+  setEviPeriod,
   setShowShiftList,
   setCheckedIn,
   setLastUpdateSession,
@@ -324,6 +326,8 @@ export default function Home() {
     dispatch(setUserProfile({}));
     dispatch(setShowShiftList(true));
     dispatch(setRelaxMode(false));
+    dispatch(setEviVideo({}));
+    dispatch(setEviPeriod({}));
     ipcRenderer.send('logout');
     dispatch(setLoading(false));
     history.push('/');

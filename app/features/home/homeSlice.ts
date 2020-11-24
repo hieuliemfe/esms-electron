@@ -28,11 +28,17 @@ const homeSlice = createSlice({
     lastUpdateSession: Date.now(),
   },
   reducers: {
+    setEviVideo: (state, { payload }) => {
+      state.eviVideos = payload;
+    },
     addEviVideo: (state, { payload }) => {
       state.eviVideos = { ...state.eviVideos, ...payload };
     },
     addEviPeriod: (state, { payload }) => {
       state.eviPeriods = { ...state.eviPeriods, ...payload };
+    },
+    setEviPeriod: (state, { payload }) => {
+      state.eviPeriods = payload;
     },
     setCheckedIn: (state, { payload }) => {
       state.isCheckedIn = payload;
@@ -47,7 +53,9 @@ const homeSlice = createSlice({
 });
 
 export const {
+  setEviVideo,
   addEviVideo,
+  setEviPeriod,
   addEviPeriod,
   setShowShiftList,
   setCheckedIn,

@@ -34,6 +34,11 @@ ipcRenderer.on('signed-url', (event, objName, url) => {
             console.log('json', json);
             let arrPeriod: any[] = json as any[];
             if (arrPeriod && arrPeriod.length > 0) {
+              const sum = arrPeriod.reduce((s, e) => {
+                const sm = s + e.duration;
+                return sm;
+              }, 0);
+              console.log('sum', sum);
               arrPeriod = arrPeriod.filter((e) => e.duration > 1000);
               arrPeriod.forEach((e, i) => {
                 e.no = i + 1;
@@ -51,7 +56,21 @@ ipcRenderer.on('signed-url', (event, objName, url) => {
 
 ipcRenderer.on('retrieved-result', (event, objName, result) => {
   if (event && objName && result) {
-    store.dispatch(addEviPeriod({ [objName]: result }));
+    console.log('result', result);
+    let arrPeriod: any[] = result as any[];
+    if (arrPeriod && arrPeriod.length > 0) {
+      const sum = arrPeriod.reduce((s, e) => {
+        const sm = s + e.duration;
+        return sm;
+      }, 0);
+      console.log('sum', sum);
+      arrPeriod = arrPeriod.filter((e) => e.duration > 1000);
+      arrPeriod.forEach((e, i) => {
+        e.no = i + 1;
+      });
+      arrPeriod = arrPeriod.sort((a, b) => b.duration - a.duration);
+    }
+    store.dispatch(addEviPeriod({ [objName]: arrPeriod }));
   }
 });
 
