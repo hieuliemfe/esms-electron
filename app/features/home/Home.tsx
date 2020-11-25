@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { ipcRenderer } from 'electron';
 import DatePicker from 'react-datepicker';
+import enGB from 'date-fns/esm/locale/en-GB';
 import routes from '../../constants/routes.json';
 import {
   getShifts,
@@ -425,7 +426,11 @@ export default function Home() {
     currentDate.setMinutes(0);
     currentDate.setHours(0);
     const startDate = new Date(currentDate);
-    if (currentDate.getDate() > 15) {
+    if (isRelaxMode) {
+      startDate.setTime(
+        startDate.getTime() - (startDate.getDay() - 1) * 24 * 60 * 60 * 1000
+      );
+    } else if (currentDate.getDate() > 15) {
       startDate.setDate(15);
     } else {
       startDate.setDate(1);
@@ -783,8 +788,9 @@ export default function Home() {
                     onChange={(date) => setSelectedDay(date as Date)}
                     maxDate={new Date()}
                     minDate={minDate}
+                    locale={enGB}
                     excludeDates={excludeDates}
-                    dateFormat="MMM dd, yyyy"
+                    dateFormat="MMMM dd, yyyy"
                     customInput={<DateButton />}
                   />
                 </div>
