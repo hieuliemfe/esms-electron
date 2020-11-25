@@ -3,6 +3,12 @@ import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../../store';
 import { ProfileInfo } from '../../services/root';
 
+export type Suspension = {
+  id: number;
+  expiredOn: string;
+  reason: string | null;
+};
+
 const loginSlice = createSlice({
   name: 'login',
   initialState: {
@@ -11,6 +17,7 @@ const loginSlice = createSlice({
     counterId: 0,
     shiftId: 0,
     relaxMode: false,
+    suspension: {} as Suspension,
   },
   reducers: {
     setToken: (state, { payload }) => {
@@ -28,6 +35,9 @@ const loginSlice = createSlice({
     setRelaxMode: (state, { payload }) => {
       state.relaxMode = payload;
     },
+    setSuspension: (state, { payload }) => {
+      state.suspension = payload;
+    },
   },
 });
 
@@ -37,6 +47,7 @@ export const {
   setCounterId,
   setShiftId,
   setRelaxMode,
+  setSuspension,
 } = loginSlice.actions;
 
 export default loginSlice.reducer;
@@ -50,3 +61,5 @@ export const selectCounterId = (state: RootState) => state.login.counterId;
 export const selectShiftId = (state: RootState) => state.login.shiftId;
 
 export const selectRelaxMode = (state: RootState) => state.login.relaxMode;
+
+export const selectSuspension = (state: RootState) => state.login.suspension;

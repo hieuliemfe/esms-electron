@@ -13,6 +13,7 @@ import {
   setUserProfile,
   setCounterId,
   setRelaxMode,
+  setSuspension,
 } from './loginSlice';
 import {
   setToken as setRequestToken,
@@ -69,18 +70,11 @@ export default function Login() {
           const { suspensions } = empErr;
           if (suspensions && suspensions[0]) {
             const suspension = suspensions[0];
-            const expiration = new Date(suspension.expiredOn);
-            const message = `Your account is temporarily suspended until ${twoDigits(
-              expiration.getDate()
-            )}/${twoDigits(
-              expiration.getMonth() + 1
-            )}/${expiration.getFullYear()} at ${twoDigits(
-              expiration.getHours()
-            )}:${twoDigits(expiration.getMinutes())}:${twoDigits(
-              expiration.getSeconds()
-            )} due to some of your improper behavior. You should take a break and come back later!`;
+            dispatch(setSuspension(suspension));
+            console.log('suspension', suspension);
+            const message = `Your account is temporarily suspended due to some of your improper behaviors. You are now redirected to Relax Mode!`;
             dispatch(setRelaxMode(true));
-            ipcRenderer.send('login-failed', message);
+            ipcRenderer.send('suspension-warning', message);
           }
         }
       }

@@ -138,7 +138,17 @@ ipcMain.on('login-failed', (event: IpcMainEvent, message: string) => {
       message,
       type: 'error',
     });
-    event.sender.send('login-failed-dialog-closed');
+  }
+});
+
+ipcMain.on('suspension-warning', (event: IpcMainEvent, message: string) => {
+  if (event && message && mainWindow) {
+    dialog.showMessageBoxSync(mainWindow, {
+      title: 'Suspension Warning',
+      message,
+      type: 'warning',
+    });
+    event.sender.send('suspension-warning-dialog-closed');
   }
 });
 

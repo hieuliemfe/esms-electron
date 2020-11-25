@@ -74,7 +74,7 @@ ipcRenderer.on('retrieved-result', (event, objName, result) => {
   }
 });
 
-ipcRenderer.on('login-failed-dialog-closed', (event) => {
+ipcRenderer.on('suspension-warning-dialog-closed', (event) => {
   if (event) {
     const isRelaxMode = store.getState().login.relaxMode;
     if (isRelaxMode) {

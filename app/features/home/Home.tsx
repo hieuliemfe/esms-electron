@@ -64,11 +64,14 @@ import {
   selectShiftId,
   selectRelaxMode,
   selectToken,
+  selectSuspension,
   setUserProfile,
   setCounterId,
   setShiftId,
   setRelaxMode,
   setToken,
+  setSuspension,
+  Suspension,
 } from '../login/loginSlice';
 import { setSessionId } from '../session/sessionSlice';
 import { setToken as setRequestToken } from '../../utils/request';
@@ -78,6 +81,13 @@ const twoDigits = (num: number | string) => `${`0${num}`.substr(-2)}`;
 
 const fourDigits = (num: number | string) =>
   num > 999 ? num : `${`000${num}`.substr(-4)}`;
+
+const getClientDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return `${twoDigits(date.getDate())}/${twoDigits(
+    date.getMonth() + 1
+  )}/${date.getFullYear()}`;
+};
 
 const getClientTime = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -156,6 +166,7 @@ export default function Home() {
   const isShowShiftList = useSelector(selectIsShowShiftList);
   const isCheckedIn = useSelector(selectIsCheckedIn);
   const isRelaxMode = useSelector(selectRelaxMode);
+  const currentSuspension: Suspension = useSelector(selectSuspension);
   const userToken = useSelector(selectToken);
   const shiftId = useSelector(selectShiftId);
   const counterId = useSelector(selectCounterId);
@@ -171,6 +182,7 @@ export default function Home() {
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [minDate, setMinDate] = useState(new Date());
   const [excludeDates, setExcludeDates] = useState<Date[]>([]);
+  console.log('currentSuspension', currentSuspension);
 
   const skipCustomer = (queueId: number) => {
     dispatch(setLoading(true));
@@ -329,6 +341,7 @@ export default function Home() {
     dispatch(setRelaxMode(false));
     dispatch(setEviVideo({}));
     dispatch(setEviPeriod({}));
+    dispatch(setSuspension({}));
     ipcRenderer.send('logout');
     dispatch(setLoading(false));
     history.push('/');
@@ -481,7 +494,9 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.sideBar}>
-        <span className={styles.appName}>EsmsApp</span>
+        <span className={styles.appName}>
+          {`${isRelaxMode ? 'EsmsRelax' : 'EsmsApp'}`}
+        </span>
         <div className={styles.navigation}>
           <div
             className={`${styles.btnNav} ${styles.active} ${styles.noHover}`}
@@ -632,7 +647,11 @@ export default function Home() {
                 <span className={styles.hello}>
                   {`Hello, ${profile.fullname}!`}
                 </span>
-                <span className={styles.tips}>Have a nice day!</span>
+                {!isRelaxMode ? (
+                  <span className={styles.tips}>Have a nice day!</span>
+                ) : (
+                  <></>
+                )}
                 <span className={styles.tips}>
                   {`${
                     isRelaxMode
@@ -640,6 +659,25 @@ export default function Home() {
                       : 'Please check in your shift to start working!'
                   }`}
                 </span>
+                {isRelaxMode ? (
+                  <>
+                    <span className={styles.tips}>
+                      {'Your account is suspended until '}
+                      <b>{getClientDate(currentSuspension.expiredOn)}</b>
+                      {' at '}
+                      <b>{getClientTime(currentSuspension.expiredOn)}</b>
+                    </span>
+                    <span className={styles.tips}>
+                      {`Reason: ${
+                        currentSuspension.reason
+                          ? currentSuspension.reason
+                          : 'N/A'
+                      }`}
+                    </span>
+                  </>
+                ) : (
+                  <></>
+                )}
               </div>
               <img src={logo} alt="ESMSLogo" className={styles.greetingLogo} />
             </div>
@@ -820,7 +858,7 @@ export default function Home() {
                               {`Duration: ${msToStr(session.sessionDuration)}`}
                             </span>
                             <span className={styles.stime}>
-                              {`Angries: ${session.angryWarningCount}`}
+                              {`Angry Warnings: ${session.angryWarningCount}`}
                             </span>
                           </div>
                         </div>
