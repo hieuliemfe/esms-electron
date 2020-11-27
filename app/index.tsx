@@ -11,7 +11,11 @@ import {
   COMMUNICATION_PORT,
   createClientSocket,
 } from './socket.dev';
-import { addEviVideo, addEviPeriod } from './features/home/homeSlice';
+import {
+  addEviVideo,
+  addEviPeriod,
+  setLoggedIn,
+} from './features/home/homeSlice';
 import request from './utils/request';
 import './app.global.css';
 
@@ -59,11 +63,6 @@ ipcRenderer.on('retrieved-result', (event, objName, result) => {
     console.log('result', result);
     let arrPeriod: any[] = result as any[];
     if (arrPeriod && arrPeriod.length > 0) {
-      const sum = arrPeriod.reduce((s, e) => {
-        const sm = s + e.duration;
-        return sm;
-      }, 0);
-      console.log('sum', sum);
       arrPeriod = arrPeriod.filter((e) => e.duration > 1000);
       arrPeriod.forEach((e, i) => {
         e.no = i + 1;
@@ -80,6 +79,15 @@ ipcRenderer.on('suspension-warning-dialog-closed', (event) => {
     if (isRelaxMode) {
       ipcRenderer.send('login-success');
       history.push(routes.HOME);
+    }
+  }
+});
+
+ipcRenderer.on('exit-relax-mode-dialog-closed', (event) => {
+  if (event) {
+    const isRelaxMode = store.getState().login.relaxMode;
+    if (isRelaxMode) {
+      store.dispatch(setLoggedIn(false));
     }
   }
 });

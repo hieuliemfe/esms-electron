@@ -22,6 +22,7 @@ const homeSlice = createSlice({
   name: 'home',
   initialState: {
     isShowShiftList: true,
+    isLoggedIn: false,
     isCheckedIn: false,
     eviVideos: {} as EvidenceUrls,
     eviPeriods: {} as EvidencePeriods,
@@ -34,11 +35,14 @@ const homeSlice = createSlice({
     addEviVideo: (state, { payload }) => {
       state.eviVideos = { ...state.eviVideos, ...payload };
     },
+    setEviPeriod: (state, { payload }) => {
+      state.eviPeriods = payload;
+    },
     addEviPeriod: (state, { payload }) => {
       state.eviPeriods = { ...state.eviPeriods, ...payload };
     },
-    setEviPeriod: (state, { payload }) => {
-      state.eviPeriods = payload;
+    setLoggedIn: (state, { payload }) => {
+      state.isLoggedIn = payload;
     },
     setCheckedIn: (state, { payload }) => {
       state.isCheckedIn = payload;
@@ -58,6 +62,7 @@ export const {
   setEviPeriod,
   addEviPeriod,
   setShowShiftList,
+  setLoggedIn,
   setCheckedIn,
   setLastUpdateSession,
 } = homeSlice.actions;
@@ -70,6 +75,8 @@ export const selectEviPeriods = (state: RootState) => state.home.eviPeriods;
 
 export const selectIsShowShiftList = (state: RootState) =>
   state.home.isShowShiftList;
+
+export const selectIsLoggedIn = (state: RootState) => state.home.isLoggedIn;
 
 export const selectIsCheckedIn = (state: RootState) => state.home.isCheckedIn;
 

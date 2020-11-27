@@ -8,6 +8,7 @@ import { useHistory } from 'react-router-dom';
 import routes from '../../constants/routes.json';
 import { login, getProfile, ProfileInfo } from '../../services/root';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
+import { setLoggedIn } from '../home/homeSlice';
 import {
   setToken,
   setUserProfile,
@@ -20,8 +21,6 @@ import {
   ResponseError,
 } from '../../utils/request';
 import styles from './Login.css';
-
-const twoDigits = (num: number | string) => `${`0${num}`.substr(-2)}`;
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -44,6 +43,7 @@ export default function Login() {
             const profileInfo: ProfileInfo = profileResponse.message;
             dispatch(setUserProfile(profileInfo));
             dispatch(setCounterId(profileInfo.counterId));
+            dispatch(setLoggedIn(true));
             ipcRenderer.send('login-success');
             history.push(routes.HOME);
           }
@@ -74,6 +74,7 @@ export default function Login() {
             console.log('suspension', suspension);
             const message = `Your account is temporarily suspended due to some of your improper behaviors. You are now redirected to Relax Mode!`;
             dispatch(setRelaxMode(true));
+            dispatch(setLoggedIn(true));
             ipcRenderer.send('suspension-warning', message);
           }
         }

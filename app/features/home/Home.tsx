@@ -47,6 +47,7 @@ import {
   selectEviVideos,
   selectEviPeriods,
   selectIsShowShiftList,
+  selectIsLoggedIn,
   selectIsCheckedIn,
   selectLastUpdateSession,
   setEviVideo,
@@ -164,6 +165,7 @@ export default function Home() {
   const history = useHistory();
   const logo = path.join(__dirname, '../resources/esms_logo200.png');
   const isShowShiftList = useSelector(selectIsShowShiftList);
+  const isLoggedIn = useSelector(selectIsLoggedIn);
   const isCheckedIn = useSelector(selectIsCheckedIn);
   const isRelaxMode = useSelector(selectRelaxMode);
   const currentSuspension: Suspension = useSelector(selectSuspension);
@@ -182,7 +184,8 @@ export default function Home() {
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [minDate, setMinDate] = useState(new Date());
   const [excludeDates, setExcludeDates] = useState<Date[]>([]);
-  console.log('currentSuspension', currentSuspension);
+  const [exitRelaxTimeout, setExitRelaxTimeout] = useState<NodeJS.Timeout>();
+  const [queueTimeout, setQueueTimeout] = useState<NodeJS.Timeout>();
 
   const skipCustomer = (queueId: number) => {
     dispatch(setLoading(true));
@@ -259,6 +262,46 @@ export default function Home() {
     }
   };
 
+  const getCustomerWaitingList = () => {
+    getQueues()
+      .then((queueResponse) => {
+        if (queueResponse.success) {
+          const data = queueResponse.message;
+          setQueueList(data);
+          if (queueTimeout) {
+            clearTimeout(queueTimeout);
+            console.log('cleared queueTimeout');
+          }
+          setQueueTimeout(
+            setTimeout(() => {
+              getCustomerWaitingList();
+            }, 5000)
+          );
+        }
+      })
+      .catch(console.log);
+  };
+
+  useEffect(() => {
+    if (isRelaxMode) {
+      if (exitRelaxTimeout) {
+        clearTimeout(exitRelaxTimeout);
+      }
+      if (currentSuspension) {
+        const expiration = new Date(currentSuspension.expiredOn);
+        const time = expiration.getTime() - Date.now();
+        setExitRelaxTimeout(
+          setTimeout(() => {
+            ipcRenderer.send(
+              'exit-relax-mode',
+              'Your relax time is over. Please get back to work!'
+            );
+          }, time)
+        );
+      }
+    }
+  }, [isRelaxMode]);
+
   useEffect(() => {
     if (showEvi && videoEviName) {
       const videoRef = videoPlayer.current;
@@ -330,6 +373,12 @@ export default function Home() {
   };
 
   const logout = () => {
+    if (exitRelaxTimeout) {
+      clearTimeout(exitRelaxTimeout);
+    }
+    if (queueTimeout) {
+      clearTimeout(queueTimeout);
+    }
     dispatch(setLoading(true));
     setRequestToken(null);
     dispatch(setCounterId(0));
@@ -346,6 +395,12 @@ export default function Home() {
     dispatch(setLoading(false));
     history.push('/');
   };
+
+  useEffect(() => {
+    if (isRelaxMode && !isLoggedIn) {
+      logout();
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     dispatch(setLoading(true));
@@ -373,63 +428,58 @@ export default function Home() {
       })
       .catch(console.log);
 
-    if (isCheckedIn) {
-      getQueues()
-        .then((queueResponse) => {
-          if (queueResponse.success) {
-            const data = queueResponse.message;
-            setQueueList(data);
-          }
-        })
-        .catch(console.log);
+    if (!isRelaxMode && isCheckedIn) {
+      getCustomerWaitingList();
     }
   }, [isCheckedIn, selectedDay, lastUpdateSession]);
 
   useEffect(() => {
-    dispatch(setLoading(true));
-    getShiftTypes()
-      .then((shiftTypeResponse) => {
-        if (shiftTypeResponse.success) {
-          const shifts = shiftTypeResponse.message;
-          if (shifts && shifts.length > 0) {
-            let foundToCheckinShift = false;
-            shifts.forEach((sh) => {
-              sh.isOver = calculateShiftOver(sh);
-              if (!sh.isOver && !foundToCheckinShift) {
-                sh.isToCheckIn = true;
-                foundToCheckinShift = true;
-              }
-            });
-            getShifts()
-              .then((shiftResponse) => {
-                if (shiftResponse.success) {
-                  const empShifts = shiftResponse.message;
-                  if (empShifts) {
-                    const { activeShifts } = empShifts;
-                    if (activeShifts && activeShifts.length > 0) {
-                      const activeShift = activeShifts[0];
-                      const shiftActive = shifts.find(
-                        (s) => s.id === activeShift.ShiftType.id
-                      );
-                      if (shiftActive) {
-                        shiftActive.isActive = true;
-                      }
-                      dispatch(setShiftId(activeShift.id));
-                      if (!isCheckedIn) {
-                        dispatch(setCheckedIn(true));
-                      }
-                      dispatch(setShowShiftList(false));
-                    }
-                    setShiftList(shifts);
-                  }
+    if (!isRelaxMode) {
+      dispatch(setLoading(true));
+      getShiftTypes()
+        .then((shiftTypeResponse) => {
+          if (shiftTypeResponse.success) {
+            const shifts = shiftTypeResponse.message;
+            if (shifts && shifts.length > 0) {
+              let foundToCheckinShift = false;
+              shifts.forEach((sh) => {
+                sh.isOver = calculateShiftOver(sh);
+                if (!sh.isOver && !foundToCheckinShift) {
+                  sh.isToCheckIn = true;
+                  foundToCheckinShift = true;
                 }
-                dispatch(setLoading(false));
-              })
-              .catch(console.log);
+              });
+              getShifts()
+                .then((shiftResponse) => {
+                  if (shiftResponse.success) {
+                    const empShifts = shiftResponse.message;
+                    if (empShifts) {
+                      const { activeShifts } = empShifts;
+                      if (activeShifts && activeShifts.length > 0) {
+                        const activeShift = activeShifts[0];
+                        const shiftActive = shifts.find(
+                          (s) => s.id === activeShift.ShiftType.id
+                        );
+                        if (shiftActive) {
+                          shiftActive.isActive = true;
+                        }
+                        dispatch(setShiftId(activeShift.id));
+                        if (!isCheckedIn) {
+                          dispatch(setCheckedIn(true));
+                        }
+                        dispatch(setShowShiftList(false));
+                      }
+                      setShiftList(shifts);
+                    }
+                  }
+                  dispatch(setLoading(false));
+                })
+                .catch(console.log);
+            }
           }
-        }
-      })
-      .catch(console.log);
+        })
+        .catch(console.log);
+    }
   }, [isCheckedIn]);
 
   useEffect(() => {

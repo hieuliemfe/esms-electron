@@ -152,6 +152,17 @@ ipcMain.on('suspension-warning', (event: IpcMainEvent, message: string) => {
   }
 });
 
+ipcMain.on('exit-relax-mode', (event: IpcMainEvent, message: string) => {
+  if (event && message && mainWindow) {
+    dialog.showMessageBoxSync(mainWindow, {
+      title: 'Exiting Relax Mode',
+      message,
+      type: 'warning',
+    });
+    event.sender.send('exit-relax-mode-dialog-closed');
+  }
+});
+
 ipcMain.on('login-success', () => {
   if (mainWindow) {
     mainWindow.maximize();
