@@ -210,13 +210,15 @@ export default function Session() {
               endSession(sessionId, endSessionInfo)
                 .then(() => {
                   setFrame(path.join(__dirname, '../resources/video.jpg'));
-                  const childpro = daemon(PYTHON_VENV_PATH, [
-                    path.join(DETECTION_PATH, './upload.py'),
-                    '--fr',
-                    evidenceFolder.replace(/\\/g, '/'),
-                    '--to',
-                    evidenceFoldername,
-                  ]);
+                  const childpro = daemon(
+                    path.join(DETECTION_PATH, './dist/upload.exe'),
+                    [
+                      '--fr',
+                      evidenceFolder.replace(/\\/g, '/'),
+                      '--to',
+                      evidenceFoldername,
+                    ]
+                  );
                   console.log(childpro);
                   needRetryConnect.value = false;
                   dispatch(setLastUpdateSession(Date.now()));

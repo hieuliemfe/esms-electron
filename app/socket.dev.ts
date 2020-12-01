@@ -57,8 +57,8 @@ export const createClientSocket = (
 };
 
 export default function runChildProcess(): ChildProcess {
-  const spawnChildProccess = (command: string, args: readonly string[]) => {
-    const childPro = spawn(command, args, {
+  const spawnChildProccess = (command: string, args?: readonly string[]) => {
+    const childPro = spawn(command, args || [], {
       stdio: ['ignore', 'pipe', 'pipe'],
     }).on('error', (err: Error) => {
       console.error('Child process spawning error:', err);
@@ -66,9 +66,9 @@ export default function runChildProcess(): ChildProcess {
     return childPro;
   };
 
-  const childProcess = spawnChildProccess(PYTHON_VENV_PATH, [
-    path.join(DETECTION_PATH, 'main.py'),
-  ]);
+  const childProcess = spawnChildProccess(
+    path.join(DETECTION_PATH, './dist/main.exe')
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   childProcess.stdout.on('data', (chunk: any) => {
