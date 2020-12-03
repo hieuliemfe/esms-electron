@@ -26,7 +26,7 @@ export const setComSocHandler = (handler: CallableFunction) => {
   COMSOC_HANDLER.push(handler);
 };
 
-const handleComSocData = (data: string) => {
+export const handleComSocData = (data: string) => {
   const handler = COMSOC_HANDLER.pop();
   if (handler) {
     handler(data);
@@ -36,12 +36,13 @@ const handleComSocData = (data: string) => {
 export const createClientSocket = (
   port: number,
   dataHandler: CallableFunction = handleComSocData,
-  shoudReconnection: CallableFunction = () => true
+  shoudReconnection: CallableFunction = () => true,
+  connectCallback: () => void = () => {
+    console.log('Connect to Python success');
+  }
 ) => {
   const comSoc = new net.Socket();
-  comSoc.connect(port, 'localhost', () => {
-    console.log('Connect to Python success');
-  });
+  comSoc.connect(port, 'localhost', connectCallback);
   comSoc.on('data', (data: Buffer) => {
     dataHandler(data.toString());
   });
@@ -59,10 +60,12 @@ export const createClientSocket = (
 export default function runChildProcess(): ChildProcess {
   const spawnChildProccess = (command: string, args?: readonly string[]) => {
     const childPro = spawn(command, args || [], {
+      detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     }).on('error', (err: Error) => {
       console.error('Child process spawning error:', err);
     });
+    childPro.unref();
     return childPro;
   };
 

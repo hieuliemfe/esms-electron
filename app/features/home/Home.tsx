@@ -20,20 +20,20 @@ import DatePicker from 'react-datepicker';
 import enGB from 'date-fns/esm/locale/en-GB';
 import routes from '../../constants/routes.json';
 import {
-  getShifts,
-  createShift,
-  checkoutShift,
-  CreateShiftData,
-} from '../../services/shifts';
-import { getShiftTypes, ShiftTypeInfo } from '../../services/shift-types';
+  getEmployeeShifts,
+  createEmployeeShift,
+  checkoutEmployeeShift,
+  CreateEmployeeShiftData,
+} from '../../services/employee-shifts';
+import { getShifts, ShiftInfo } from '../../services/shifts';
 import { ProfileInfo } from '../../services/root';
 import {
-  getQueues,
-  assignQueue,
-  skipQueue,
-  removeQueue,
-  QueueInfo,
-} from '../../services/queues';
+  getWaitingList,
+  assignWaiting,
+  skipWaiting,
+  removeWaiting,
+  WaitingInfo,
+} from '../../services/waiting-list';
 import {
   createSession,
   getSessionSummary,
@@ -50,6 +50,7 @@ import {
   selectIsLoggedIn,
   selectIsCheckedIn,
   selectLastUpdateSession,
+  selectIsComSocReady,
   setEviVideo,
   setEviPeriod,
   setShowShiftList,
@@ -124,7 +125,7 @@ const msToStr = (ms: number, _callCount = 1): string => {
   )}`;
 };
 
-const calculateShiftOver = (sh: ShiftTypeInfo) => {
+const calculateShiftOver = (sh: ShiftInfo) => {
   const currentTime = Date.now();
   const dateStr = new Date().toJSON().split('T')[0];
   const cmpDate = new Date(`${dateStr}T${sh.shiftEnd}`);
@@ -168,13 +169,14 @@ export default function Home() {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const isCheckedIn = useSelector(selectIsCheckedIn);
   const isRelaxMode = useSelector(selectRelaxMode);
+  const isComSocReady = useSelector(selectIsComSocReady);
   const currentSuspension: Suspension = useSelector(selectSuspension);
   const userToken = useSelector(selectToken);
   const shiftId = useSelector(selectShiftId);
   const counterId = useSelector(selectCounterId);
   const lastUpdateSession = useSelector(selectLastUpdateSession);
-  const [shiftList, setShiftList] = useState<ShiftTypeInfo[] | null>(null);
-  const [queueList, setQueueList] = useState<QueueInfo[] | null>(null);
+  const [shiftList, setShiftList] = useState<ShiftInfo[] | null>(null);
+  const [waitingList, setWaitingList] = useState<WaitingInfo[] | null>(null);
   const [isShowEvi, setShowEvi] = useState(false);
   const [videoEviPath, setVideoEviPath] = useState<string | null>(null);
   const [videoEviName, setVideoEviName] = useState<string | null>(null);
@@ -185,13 +187,13 @@ export default function Home() {
   const [minDate, setMinDate] = useState(new Date());
   const [excludeDates, setExcludeDates] = useState<Date[]>([]);
   const [exitRelaxTimeout, setExitRelaxTimeout] = useState<NodeJS.Timeout>();
-  const [queueTimeout, setQueueTimeout] = useState<NodeJS.Timeout>();
+  const [waitingTimeout, setWaitingTimeout] = useState<NodeJS.Timeout>();
 
-  const skipCustomer = (queueId: number) => {
+  const skipCustomer = (waitingId: number) => {
     dispatch(setLoading(true));
-    skipQueue(queueId)
-      .then((skipQueueResponse) => {
-        if (skipQueueResponse.success) {
+    skipWaiting(waitingId)
+      .then((skipResponse) => {
+        if (skipResponse.success) {
           dispatch(setLastUpdateSession(Date.now()));
           dispatch(setLoading(false));
         }
@@ -199,11 +201,11 @@ export default function Home() {
       .catch(console.log);
   };
 
-  const removeCustomer = (queueId: number) => {
+  const removeCustomer = (waitingId: number) => {
     dispatch(setLoading(true));
-    removeQueue(queueId)
-      .then((removeQueueResponse) => {
-        if (removeQueueResponse.success) {
+    removeWaiting(waitingId)
+      .then((removeResponse) => {
+        if (removeResponse.success) {
           dispatch(setLastUpdateSession(Date.now()));
           dispatch(setLoading(false));
         }
@@ -263,16 +265,15 @@ export default function Home() {
   };
 
   const getCustomerWaitingList = () => {
-    getQueues()
-      .then((queueResponse) => {
-        if (queueResponse.success) {
-          const data = queueResponse.message;
-          setQueueList(data);
-          if (queueTimeout) {
-            clearTimeout(queueTimeout);
-            console.log('cleared queueTimeout');
+    getWaitingList()
+      .then((waitingResponse) => {
+        if (waitingResponse.success) {
+          const data = waitingResponse.message;
+          setWaitingList(data);
+          if (waitingTimeout) {
+            clearTimeout(waitingTimeout);
           }
-          setQueueTimeout(
+          setWaitingTimeout(
             setTimeout(() => {
               getCustomerWaitingList();
             }, 5000)
@@ -316,9 +317,12 @@ export default function Home() {
     console.log('[eviPeriods]:', eviPeriods);
   }, [eviPeriods]);
 
-  const startSession = (queueId: number) => {
+  const startSession = (waitingId: number) => {
+    if (waitingTimeout) {
+      clearTimeout(waitingTimeout);
+    }
     dispatch(setLoading(true));
-    assignQueue(counterId, queueId)
+    assignWaiting(counterId, waitingId)
       .then(async (assignResponse) => {
         if (assignResponse.success) {
           const createSessionResponse = await createSession();
@@ -326,6 +330,7 @@ export default function Home() {
             const sessionInfo = createSessionResponse.message;
             dispatch(setSessionId(sessionInfo.id));
             dispatch(setLoading(false));
+            ipcRenderer.send('store-session-id', sessionInfo.id);
             history.push(routes.SESSION);
           }
         }
@@ -333,13 +338,13 @@ export default function Home() {
       .catch((error) => console.log(error));
   };
 
-  const checkin = (selectedShiftType: ShiftTypeInfo | undefined) => {
+  const checkin = (selectedShift: ShiftInfo | undefined) => {
     dispatch(setLoading(true));
-    if (selectedShiftType) {
-      const createShiftData: CreateShiftData = {
-        shiftTypeId: selectedShiftType.id,
+    if (selectedShift) {
+      const createShiftData: CreateEmployeeShiftData = {
+        shiftId: selectedShift.id,
       };
-      createShift(createShiftData)
+      createEmployeeShift(createShiftData)
         .then((createShiftResponse) => {
           if (createShiftResponse.success) {
             const { shiftId: shId } = createShiftResponse.message;
@@ -358,7 +363,7 @@ export default function Home() {
   };
 
   const checkout = () => {
-    checkoutShift(shiftId)
+    checkoutEmployeeShift(shiftId)
       .then(() => {
         dispatch(setShiftId(0));
         dispatch(setCheckedIn(false));
@@ -376,8 +381,8 @@ export default function Home() {
     if (exitRelaxTimeout) {
       clearTimeout(exitRelaxTimeout);
     }
-    if (queueTimeout) {
-      clearTimeout(queueTimeout);
+    if (waitingTimeout) {
+      clearTimeout(waitingTimeout);
     }
     dispatch(setLoading(true));
     setRequestToken(null);
@@ -391,6 +396,7 @@ export default function Home() {
     dispatch(setEviVideo({}));
     dispatch(setEviPeriod({}));
     dispatch(setSuspension({}));
+    ipcRenderer.send('reset-token');
     ipcRenderer.send('logout');
     dispatch(setLoading(false));
     history.push('/');
@@ -410,6 +416,11 @@ export default function Home() {
     startDate.setSeconds(0);
     startDate.setMilliseconds(0);
     const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+    if (isRelaxMode) {
+      startDate.setTime(
+        startDate.getTime() - (startDate.getDay() - 1) * 24 * 60 * 60 * 1000
+      );
+    }
     const getSessionSummaryData: GetSessionSummaryData = {
       employeeCode: profile.employeeCode,
       startDate: startDate.toJSON(),
@@ -422,7 +433,11 @@ export default function Home() {
             sessionSummaryResponse.message;
           if (result) {
             dispatch(setLoading(false));
-            setSessionList(result.sessions);
+            let { sessions } = result;
+            if (isRelaxMode) {
+              sessions = sessions.filter((s) => s.angryWarningCount > 0);
+            }
+            setSessionList(sessions);
           }
         }
       })
@@ -436,10 +451,10 @@ export default function Home() {
   useEffect(() => {
     if (!isRelaxMode) {
       dispatch(setLoading(true));
-      getShiftTypes()
-        .then((shiftTypeResponse) => {
-          if (shiftTypeResponse.success) {
-            const shifts = shiftTypeResponse.message;
+      getShifts()
+        .then((shiftResponse) => {
+          if (shiftResponse.success) {
+            const shifts = shiftResponse.message;
             if (shifts && shifts.length > 0) {
               let foundToCheckinShift = false;
               shifts.forEach((sh) => {
@@ -449,16 +464,16 @@ export default function Home() {
                   foundToCheckinShift = true;
                 }
               });
-              getShifts()
-                .then((shiftResponse) => {
-                  if (shiftResponse.success) {
-                    const empShifts = shiftResponse.message;
+              getEmployeeShifts()
+                .then((employeeShiftResponse) => {
+                  if (employeeShiftResponse.success) {
+                    const empShifts = employeeShiftResponse.message;
                     if (empShifts) {
                       const { activeShifts } = empShifts;
                       if (activeShifts && activeShifts.length > 0) {
                         const activeShift = activeShifts[0];
                         const shiftActive = shifts.find(
-                          (s) => s.id === activeShift.ShiftType.id
+                          (s) => s.id === activeShift.Shift.id
                         );
                         if (shiftActive) {
                           shiftActive.isActive = true;
@@ -600,21 +615,21 @@ export default function Home() {
         <div className={styles.shiftListInner}>
           {isRelaxMode ? (
             <>
-              <span className={styles.shiftListTitle}>Behavior guideline</span>
+              <span className={styles.shiftListTitle}>Behavior Guidelines</span>
               <div className={styles.behaviorWrapper}>
                 <iframe
                   title="BehaviorGuideline"
-                  src="https://www.youtube.com/embed/VUvI0gQmlho"
+                  src="https://www.youtube.com/embed/videoseries?list=PLYvYevIwI4IZphB6jBe76ErzuNPjWOXrL&rel=0&fs=0&iv_load_policy=3&loop=1&modestbranding=1"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               </div>
-              <span className={styles.behaviorTitle}>Relax video</span>
+              <span className={styles.behaviorTitle}>Relax Video</span>
               <div className={styles.behaviorWrapper}>
                 <iframe
                   title="RelaxVideo"
-                  src="https://www.youtube.com/embed/9Q634rbsypE"
+                  src="https://www.youtube.com/embed/9Q634rbsypE?rel=0&fs=0&iv_load_policy=3&loop=1&modestbranding=1"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -626,7 +641,7 @@ export default function Home() {
               <span className={styles.shiftListTitle}>Today shifts</span>
               <div className={styles.shiftList}>
                 {shiftList && shiftList.length > 0 ? (
-                  shiftList.map((sh: ShiftTypeInfo) => (
+                  shiftList.map((sh: ShiftInfo) => (
                     <div
                       className={`${styles.shiftItem} ${
                         sh.isActive
@@ -741,37 +756,41 @@ export default function Home() {
               <span className={styles.waitingListTitle}>
                 Customer Waiting List
               </span>
-              <div className={styles.waitingList}>
-                {queueList && queueList.length > 0 ? (
+              <div
+                className={`${styles.waitingList} ${
+                  isComSocReady ? '' : styles.notReady
+                }`}
+              >
+                {waitingList && waitingList.length > 0 ? (
                   <div className={styles.waitingInner}>
-                    {queueList.map((queue: QueueInfo) => (
-                      <div className={styles.waitingItem} key={queue.id}>
+                    {waitingList.map((waiting: WaitingInfo) => (
+                      <div className={styles.waitingItem} key={waiting.id}>
                         <div className={styles.waitingItemHead}>
                           <i className={`far fa-user ${styles.queueIcon}`} />
                           <span className={styles.waitingNo}>
-                            {fourDigits(queue.number)}
+                            {fourDigits(waiting.number)}
                           </span>
                           <i
                             className={`fas fa-times-circle ${styles.removeIcon}`}
-                            onClick={() => removeCustomer(queue.id)}
+                            onClick={() => removeCustomer(waiting.id)}
                           />
                           <div
                             className={styles.startSessionBtn}
-                            onClick={() => startSession(queue.id)}
+                            onClick={() => startSession(waiting.id)}
                           >
                             Start Session
                           </div>
                           <i
                             className={`fas fa-forward ${styles.skipIcon}`}
-                            onClick={() => skipCustomer(queue.id)}
+                            onClick={() => skipCustomer(waiting.id)}
                           />
                         </div>
                         <div className={styles.waitingItemTail}>
                           <span className={styles.wNo}>
-                            {queue.customerName}
+                            {waiting.customerName}
                           </span>
                           <span className={styles.wCat}>
-                            {queue.Category.categoryName}
+                            {waiting.Category.categoryName}
                           </span>
                         </div>
                       </div>
@@ -788,7 +807,11 @@ export default function Home() {
           <div className={styles.footerInner}>
             <div className={styles.resultWrapper}>
               <div className={styles.resultTextWrapper}>
-                <span className={styles.footerTitle}>Session History</span>
+                <span className={styles.footerTitle}>
+                  {isRelaxMode
+                    ? 'This Week Warning Sessions'
+                    : 'Session History'}
+                </span>
               </div>
             </div>
             <div
@@ -870,17 +893,21 @@ export default function Home() {
               </div>
               <div className={styles.sessionListWrapper}>
                 <div className={styles.btnDateWrapper}>
-                  <DatePicker
-                    selected={selectedDay}
-                    popperPlacement="bottom-start"
-                    onChange={(date) => setSelectedDay(date as Date)}
-                    maxDate={new Date()}
-                    minDate={minDate}
-                    locale={enGB}
-                    excludeDates={excludeDates}
-                    dateFormat="MMMM dd, yyyy"
-                    customInput={<DateButton />}
-                  />
+                  {!isRelaxMode ? (
+                    <DatePicker
+                      selected={selectedDay}
+                      popperPlacement="bottom-start"
+                      onChange={(date) => setSelectedDay(date as Date)}
+                      maxDate={new Date()}
+                      minDate={minDate}
+                      locale={enGB}
+                      excludeDates={excludeDates}
+                      dateFormat="MMMM dd, yyyy"
+                      customInput={<DateButton />}
+                    />
+                  ) : (
+                    <></>
+                  )}
                 </div>
                 <div className={styles.sessionList}>
                   {sessionList && sessionList.length > 0 ? (
@@ -901,6 +928,9 @@ export default function Home() {
                               {`session_${fourDigits(session.id)}`}
                             </span>
                             <span />
+                            <span className={styles.stime}>
+                              {`Date: ${getClientDate(session.sessionStart)}`}
+                            </span>
                             <span className={styles.stime}>
                               {`Time: ${getClientTime(session.sessionStart)}`}
                             </span>

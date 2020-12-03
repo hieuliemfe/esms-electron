@@ -10,20 +10,30 @@ import {
   COMMUNICATION_SOCKET,
   COMMUNICATION_PORT,
   createClientSocket,
+  handleComSocData,
 } from './socket.dev';
 import {
   addEviVideo,
   addEviPeriod,
   setLoggedIn,
+  setComSocReady,
 } from './features/home/homeSlice';
 import request from './utils/request';
 import './app.global.css';
 
-// runChildProcess();
-
-COMMUNICATION_SOCKET.SOCKET = createClientSocket(COMMUNICATION_PORT);
-
 const store = configuredStore();
+
+COMMUNICATION_SOCKET.SOCKET = createClientSocket(
+  COMMUNICATION_PORT,
+  handleComSocData,
+  () => true,
+  () => {
+    console.log(
+      `[ELECTRON_RENDERER_PROCESS]: Connect success to port ${COMMUNICATION_PORT}`
+    );
+    store.dispatch(setComSocReady(true));
+  }
+);
 
 ipcRenderer.on('signed-url', (event, objName, url) => {
   if (event && objName && url) {

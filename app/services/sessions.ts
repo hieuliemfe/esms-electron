@@ -65,16 +65,6 @@ export async function createSession(): Promise<CreateSessionResponse> {
   return request.post('/sessions') as Promise<CreateSessionResponse>;
 }
 
-type StartSessionResponse = EsmsResponse<number[]>;
-
-export async function startSession(
-  sessionId: number
-): Promise<StartSessionResponse> {
-  return request.put(`/sessions/${sessionId}/start`) as Promise<
-    StartSessionResponse
-  >;
-}
-
 export type EmotionPeriodData = {
   duration: number;
   periodEnd: number;

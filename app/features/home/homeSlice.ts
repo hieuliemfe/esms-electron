@@ -27,6 +27,7 @@ const homeSlice = createSlice({
     eviVideos: {} as EvidenceUrls,
     eviPeriods: {} as EvidencePeriods,
     lastUpdateSession: Date.now(),
+    isComSocReady: false,
   },
   reducers: {
     setEviVideo: (state, { payload }) => {
@@ -53,6 +54,9 @@ const homeSlice = createSlice({
     setLastUpdateSession: (state, { payload }) => {
       state.lastUpdateSession = payload;
     },
+    setComSocReady: (state, { payload }) => {
+      state.isComSocReady = payload;
+    },
   },
 });
 
@@ -65,6 +69,7 @@ export const {
   setLoggedIn,
   setCheckedIn,
   setLastUpdateSession,
+  setComSocReady,
 } = homeSlice.actions;
 
 export default homeSlice.reducer;
@@ -82,3 +87,6 @@ export const selectIsCheckedIn = (state: RootState) => state.home.isCheckedIn;
 
 export const selectLastUpdateSession = (state: RootState) =>
   state.home.lastUpdateSession;
+
+export const selectIsComSocReady = (state: RootState) =>
+  state.home.isComSocReady;

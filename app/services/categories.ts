@@ -1,6 +1,4 @@
-import request, { EsmsResponse } from '../utils/request';
-
-export type TaskInfo = {
+export type ServiceInfo = {
   id: number;
   name: string;
   code: string;
@@ -10,29 +8,5 @@ export type CategoryInfo = {
   id: number;
   categoryName: string;
   subtitle: string;
-  Tasks?: TaskInfo[];
+  Services?: ServiceInfo[];
 };
-
-type CounterCategoryInfo = {
-  Category: CategoryInfo;
-};
-
-type CounterCategoryResponse = EsmsResponse<CounterCategoryInfo[]>;
-
-export async function getCounterCategory(
-  counterId: number
-): Promise<CounterCategoryResponse> {
-  return request.get(`/categories/counters/${counterId}`) as Promise<
-    CounterCategoryResponse
-  >;
-}
-
-type CategoryTasksResponse = EsmsResponse<TaskInfo[]>;
-
-export async function getCategoryTasks(
-  categoryId: number
-): Promise<CategoryTasksResponse> {
-  return request.get(`/categories/${categoryId}/tasks`) as Promise<
-    CategoryTasksResponse
-  >;
-}

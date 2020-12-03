@@ -1,5 +1,7 @@
+/* eslint-disable promise/always-return */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-dynamic-require */
-/* eslint global-require: off, no-console: off */
+/* eslint global-require: off */
 
 /**
  * This module executes inside of electron's main process. You can start
@@ -22,8 +24,14 @@ import {
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import { spawn } from 'child_process';
 import { generateV4ReadSignedUrl } from './services/google-cloud';
-import runChildProcess, { DETECTION_PATH } from './socket.dev';
+import runChildProcess, {
+  DETECTION_PATH,
+  COMMUNICATION_PORT,
+  createClientSocket,
+} from './socket.dev';
+import { API_ENDPOINT } from './utils/request';
 // import MenuBuilder from './menu';
 
 export default class AppUpdater {
@@ -131,6 +139,28 @@ const createWindows = async () => {
  * Add event listeners...
  */
 
+const APP_BACKUP = { token: '', sessionId: 0 };
+
+ipcMain.on('store-token', (event: IpcMainEvent, token: string) => {
+  if (event && token) {
+    APP_BACKUP.token = token;
+  }
+});
+
+ipcMain.on('reset-token', () => {
+  APP_BACKUP.token = '';
+});
+
+ipcMain.on('store-session-id', (event: IpcMainEvent, sessionId: number) => {
+  if (event && sessionId) {
+    APP_BACKUP.sessionId = sessionId;
+  }
+});
+
+ipcMain.on('reset-session-id', () => {
+  APP_BACKUP.sessionId = 0;
+});
+
 ipcMain.on('login-failed', (event: IpcMainEvent, message: string) => {
   if (event && message && mainWindow) {
     dialog.showMessageBoxSync(mainWindow, {
@@ -204,21 +234,126 @@ process.env.OPENH264_LIBRARY = path.join(
   process.env.OPENH264_LIBRARY as string
 );
 
+const daemon = (script: any, args: any) => {
+  // spawn the child using the same node process as ours
+  const child = spawn(script, args, {
+    detached: true,
+    stdio: 'ignore',
+  });
+
+  // required so the parent can exit
+  child.unref();
+
+  return child;
+};
+
+const fourDigits = (num: number | string) =>
+  num > 999 ? num : `${`000${num}`.substr(-4)}`;
+
 const CHILD_PROCESS = runChildProcess();
 
 app.on('window-all-closed', () => {
-  console.log('[CHILD_PROCESS]: pid=', CHILD_PROCESS.pid);
-  console.log('[CHILD_PROCESS]: spawnfile=', CHILD_PROCESS.spawnfile);
-  console.log('[CHILD_PROCESS]: spawnargs=', CHILD_PROCESS.spawnargs);
-  console.log('[CHILD_PROCESS]: killed=', CHILD_PROCESS.killed);
-  CHILD_PROCESS.kill('SIGTERM');
-  console.log('[CHILD_PROCESS]: killed with SIGTERM');
-  console.log('[CHILD_PROCESS]: killed=', CHILD_PROCESS.killed);
-  // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  console.log(`[CHILD_PROCESS]: pid=${CHILD_PROCESS.pid}`);
+  console.log(`[CHILD_PROCESS]: spawnfile=${CHILD_PROCESS.spawnfile}`);
+  console.log(`[CHILD_PROCESS]: spawnargs=${CHILD_PROCESS.spawnargs}`);
+  const CAMERA_SOCKET_RETRYCON = { isCameraStop: false };
+  const COMMUNICATION_SOCKET_RETRYCON = { retry: true };
+  createClientSocket(
+    9090,
+    (payload: string) => {
+      const data = JSON.parse(payload);
+      console.log(`[CAMERA_SOCKET]: data.emotion=${data.emotion}`);
+    },
+    () => !CAMERA_SOCKET_RETRYCON.isCameraStop
+  );
+  const COMMUNICATION_SOCKET = createClientSocket(
+    COMMUNICATION_PORT,
+    (payload: string) => {
+      CAMERA_SOCKET_RETRYCON.isCameraStop = true;
+      console.log(`[COMMUNICATION_SOCKET]: payload=${payload}`);
+      const eventType = payload.substring(0, payload.indexOf(':'));
+      const dataStr = payload.substring(payload.indexOf(':') + 1);
+      console.log('eventType', eventType);
+      console.log('dataStr', dataStr);
+      if (eventType === 'SessionResult') {
+        const sessionDetectedResult: any = JSON.parse(dataStr);
+        if (
+          sessionDetectedResult &&
+          sessionDetectedResult.periods &&
+          sessionDetectedResult.periods.length > 0
+        ) {
+          const sessionEmotionInfo = sessionDetectedResult.periods.map(
+            (ps: any, i: number) => ({
+              emotion: i + 1,
+              periods: ps.map((p: any) => ({
+                duration: p.duration,
+                periodStart: p.period_start,
+                periodEnd: p.period_end,
+              })),
+            })
+          );
+          const endSessionInfo: any = {
+            emotions: sessionEmotionInfo,
+            info: JSON.stringify(sessionDetectedResult.result),
+          };
+          if (APP_BACKUP.token && APP_BACKUP.sessionId !== 0) {
+            const evidenceFoldername = `session_${fourDigits(
+              APP_BACKUP.sessionId
+            )}/`;
+            const evidenceFolder = path.join(
+              __dirname,
+              `../evidences/${evidenceFoldername}`
+            );
+            console.log('[TEST]:---evidenceFolder', evidenceFolder);
+            const fetch = require('node-fetch');
+            fetch(`${API_ENDPOINT}/sessions/${APP_BACKUP.sessionId}/end`, {
+              method: 'put',
+              body: JSON.stringify(endSessionInfo),
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${APP_BACKUP.token}`,
+              },
+            })
+              .then((res: any) => res.json())
+              .then(() => {
+                const childpro = daemon(
+                  path.join(DETECTION_PATH, './dist/upload.exe'),
+                  [
+                    '--fr',
+                    evidenceFolder.replace(/\\/g, '/'),
+                    '--to',
+                    evidenceFoldername,
+                  ]
+                );
+                console.log(childpro);
+              })
+              .then(() => {
+                // Respect the OSX convention of having the application in memory even
+                // after all windows have been closed
+                if (process.platform !== 'darwin') {
+                  app.quit();
+                }
+              })
+              .catch(console.log);
+          } else if (process.platform !== 'darwin') {
+            app.quit();
+          }
+        } else if (process.platform !== 'darwin') {
+          app.quit();
+        }
+      } else if (process.platform !== 'darwin') {
+        app.quit();
+      }
+    },
+    () => COMMUNICATION_SOCKET_RETRYCON.retry,
+    () => {
+      console.log(
+        `[ELECTRON_MAIN_PROCESS]: Connect success to port ${COMMUNICATION_PORT}`
+      );
+      COMMUNICATION_SOCKET_RETRYCON.retry = false;
+    }
+  );
+  COMMUNICATION_SOCKET.write('exit');
 });
 
 if (process.env.E2E_BUILD === 'true') {

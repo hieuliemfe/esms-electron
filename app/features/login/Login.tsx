@@ -37,6 +37,7 @@ export default function Login() {
         if (loginResponse.success) {
           dispatch(setToken(loginResponse.token));
           setRequestToken(loginResponse.token);
+          ipcRenderer.send('store-token', loginResponse.token);
 
           const profileResponse = await getProfile();
           if (profileResponse.success) {
@@ -59,6 +60,7 @@ export default function Login() {
       } else {
         dispatch(setToken(token));
         setRequestToken(token);
+        ipcRenderer.send('store-token', token);
         console.log('token', token);
         console.log('empErr', empErr);
 

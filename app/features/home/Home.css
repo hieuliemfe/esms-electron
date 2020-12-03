@@ -502,11 +502,11 @@ span.waitingListTitle {
   opacity: 0.6;
 }
 
-.waitingItem:first-child:hover {
+.waitingList:not(.notReady) .waitingItem:first-child:hover {
   border: 2px solid #1479ff;
 }
 
-.waitingItem:first-child::before {
+.waitingList:not(.notReady) .waitingItem:first-child::before {
   display: none;
 }
 
@@ -596,19 +596,19 @@ span.waitingListTitle {
   box-shadow: 0 0 10px 0 rgba(20, 121, 255, 0.2);
 }
 
-.waitingItem:first-child:hover .waitingItemHead {
+.waitingList:not(.notReady) .waitingItem:first-child:hover .waitingItemHead {
   border-bottom-color: #1479ff;
 }
 
-.waitingItem:first-child:hover .removeIcon {
+.waitingList:not(.notReady) .waitingItem:first-child:hover .removeIcon {
   display: block;
 }
 
-.waitingItem:first-child:hover .startSessionBtn {
+.waitingList:not(.notReady) .waitingItem:first-child:hover .startSessionBtn {
   display: flex;
 }
 
-.waitingItem:first-child:hover i.skipIcon {
+.waitingList:not(.notReady) .waitingItem:first-child:hover i.skipIcon {
   display: flex;
 }
 

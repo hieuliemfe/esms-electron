@@ -265,6 +265,7 @@
     "electron-updater": "^4.3.4",
     "fs": "^0.0.1-security",
     "history": "^4.7.2",
+    "node-fetch": "^2.6.1",
     "react": "^16.13.1",
     "react-datepicker": "^3.3.0",
     "react-dom": "^16.12.0",

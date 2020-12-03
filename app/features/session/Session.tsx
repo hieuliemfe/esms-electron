@@ -13,15 +13,15 @@ import { useHistory } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import path from 'path';
 import { spawn } from 'child_process';
+import { ipcRenderer } from 'electron';
 import {
-  startSession,
   endSession,
   EmotionData,
   EmotionPeriodData,
   EndSessionData,
 } from '../../services/sessions';
 import { getCounter } from '../../services/counters';
-import { CategoryInfo, TaskInfo } from '../../services/categories';
+import { CategoryInfo, ServiceInfo } from '../../services/categories';
 import {
   setSessionDetectedResult,
   selectSessionId,
@@ -35,11 +35,12 @@ import {
   setComSocHandler,
   COMMUNICATION_SOCKET,
   DETECTION_PATH,
-  PYTHON_VENV_PATH,
+  // PYTHON_VENV_PATH,
 } from '../../socket.dev';
 import styles from './Session.css';
 
-const fourDigits = (num: number | string) => `${`000${num}`.substr(-4)}`;
+const fourDigits = (num: number | string) =>
+  num > 999 ? num : `${`000${num}`.substr(-4)}`;
 
 const daemon = (script: any, args: any) => {
   // spawn the child using the same node process as ours
@@ -65,11 +66,11 @@ export default function Session() {
   const [selectedCategory, setSelectedCategory] = useState<
     CategoryInfo | undefined
   >();
-  const [taskList, setTaskList] = useState<TaskInfo[] | undefined>();
-  const [filteredTaskList, setFilteredTaskList] = useState<
-    TaskInfo[] | undefined
+  const [serviceList, setServiceList] = useState<ServiceInfo[] | undefined>();
+  const [filteredServiceList, setFilteredServiceList] = useState<
+    ServiceInfo[] | undefined
   >();
-  const [selectedTaskName, setSelectedTaskName] = useState<
+  const [selectedServiceName, setSelectedServiceName] = useState<
     string | undefined
   >();
   const [frame, setFrame] = useState(
@@ -86,28 +87,39 @@ export default function Session() {
   const [isShowForm, setShowForm] = useState(false);
   const { register, handleSubmit, reset } = useForm();
   const [isShowWarning, setShowWarning] = useState(false);
+  const [isShowCustomerInfo, setShowCustomerInfo] = useState(false);
   let sessionDetectedResult: SessionDetectedInfo;
   let sessionEmotionInfo: EmotionData[] = [];
   let endSessionInfo: EndSessionData;
 
-  const selectTask = (taskName: string) => {
-    setSelectedTaskName(taskName);
+  const selectService = (serviceName: string) => {
+    setSelectedServiceName(serviceName);
     setShowForm(true);
   };
 
-  const cancelTask = () => {
+  const cancelService = () => {
     setShowForm(false);
   };
 
-  const searchTask = (event: any) => {
+  const searchCustomer = async () => {
+    dispatch(setLoading(true));
+    await new Promise(() => {
+      setTimeout(() => {
+        dispatch(setLoading(false));
+        setShowCustomerInfo(true);
+      }, 1000);
+    });
+  };
+
+  const searchService = (event: any) => {
     const searchValue = event.target.value.trim();
     if (selectedCategory) {
       setSelectedCategory(undefined);
     }
-    if (searchValue && taskList && taskList.length > 0) {
-      setFilteredTaskList(
-        taskList.filter((task) =>
-          task.name.toLowerCase().includes(searchValue.toLowerCase())
+    if (searchValue && serviceList && serviceList.length > 0) {
+      setFilteredServiceList(
+        serviceList.filter((service) =>
+          service.name.toLowerCase().includes(searchValue.toLowerCase())
         )
       );
     }
@@ -116,10 +128,10 @@ export default function Session() {
   const toggleSelectedCategory = (category: CategoryInfo) => {
     if (!selectedCategory || selectedCategory.id !== category.id) {
       setSelectedCategory(category);
-      setFilteredTaskList(category.Tasks);
+      setFilteredServiceList(category.Services);
     } else {
       setSelectedCategory(undefined);
-      setFilteredTaskList(undefined);
+      setFilteredServiceList(undefined);
     }
   };
 
@@ -138,28 +150,25 @@ export default function Session() {
     dispatch(setLoading(true));
     getCounter(counterId)
       .then(async (getCounterResponse) => {
-        console.log('getCounterResponse', getCounterResponse);
         if (getCounterResponse.success) {
           const { counters } = getCounterResponse.message;
           if (counters) {
             const catList: CategoryInfo[] | undefined = counters.Categories;
             if (catList && catList.length > 0) {
-              let tsList: TaskInfo[] = [];
+              let svList: ServiceInfo[] = [];
               catList.forEach((cat) => {
-                if (cat.Tasks) {
-                  tsList = [...tsList, ...cat.Tasks];
+                if (cat.Services) {
+                  svList = [...svList, ...cat.Services];
                 }
               });
               setCategoryList(catList);
-              setTaskList(tsList);
+              setServiceList(svList);
               dispatch(setLoading(false));
-              console.log('hello');
             }
           }
         }
       })
       .catch((error) => console.log(error));
-    startSession(sessionId).catch((error) => console.log(error));
   }, [counterId]);
 
   useEffect(() => {
@@ -223,6 +232,7 @@ export default function Session() {
                   needRetryConnect.value = false;
                   dispatch(setLastUpdateSession(Date.now()));
                   dispatch(setLoading(false));
+                  ipcRenderer.send('reset-session-id');
                   history.goBack();
                 })
                 .catch((error) => console.log(error));
@@ -282,7 +292,59 @@ export default function Session() {
             <div className={styles.angryTitleWrapper}>
               <span className={styles.angryTitle}>Session Information</span>
             </div>
-            <div className={styles.angryListWrapper} />
+            <div className={styles.angryListWrapper}>
+              <div className={styles.searchCustomerWrapper}>
+                <input
+                  type="text"
+                  className={styles.searchCusInput}
+                  placeholder="Search for Customer"
+                />
+                <div
+                  className={styles.searchCustomerBtnWrp}
+                  onClick={() => searchCustomer()}
+                >
+                  <i className="fas fa-search" />
+                </div>
+              </div>
+              {isShowCustomerInfo ? (
+                <>
+                  <div className={styles.formBlockFull}>
+                    <span className={styles.formSubtitle}>Full Name</span>
+                    <div
+                      className={`${styles.formBlock} ${styles.formBlockFull} ${styles.flexEnd}`}
+                    >
+                      <span className={styles.cusInfo}>Nguyen Hieu Liem</span>
+                    </div>
+                  </div>
+                  <div className={styles.formBlockFull}>
+                    <span className={styles.formSubtitle}>ID Card</span>
+                    <div
+                      className={`${styles.formBlock} ${styles.formBlockFull} ${styles.flexEnd}`}
+                    >
+                      <span className={styles.cusInfo}>281123654</span>
+                    </div>
+                  </div>
+                  <div className={styles.formBlockFull}>
+                    <span className={styles.formSubtitle}>Account Number</span>
+                    <div
+                      className={`${styles.formBlock} ${styles.formBlockFull} ${styles.flexEnd}`}
+                    >
+                      <span className={styles.cusInfo}>65010001234569</span>
+                    </div>
+                  </div>
+                  <div className={styles.formBlockFull}>
+                    <span className={styles.formSubtitle}>Phone</span>
+                    <div
+                      className={`${styles.formBlock} ${styles.formBlockFull} ${styles.flexEnd}`}
+                    >
+                      <span className={styles.cusInfo}>0946913679</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <></>
+              )}
+            </div>
           </div>
         </div>
         <div
@@ -297,7 +359,7 @@ export default function Session() {
                   <input
                     type="text"
                     placeholder="Find a service"
-                    onInput={(ev) => searchTask(ev)}
+                    onInput={(ev) => searchService(ev)}
                   />
                   <i className="fas fa-search" />
                 </div>
@@ -347,14 +409,14 @@ export default function Session() {
               </div>
               <div className={styles.resultWrapper}>
                 <div className={styles.listTaskWrapper}>
-                  {filteredTaskList ? (
+                  {filteredServiceList ? (
                     <div className={styles.listTaskInner}>
-                      {filteredTaskList.length > 0 ? (
-                        filteredTaskList.map((task) => (
+                      {filteredServiceList.length > 0 ? (
+                        filteredServiceList.map((service) => (
                           <div
                             className={styles.listTaskItemWrapper}
-                            key={task.id}
-                            onClick={() => selectTask(task.name)}
+                            key={service.id}
+                            onClick={() => selectService(service.name)}
                           >
                             <div className={styles.listTaskItem}>
                               <i
@@ -362,7 +424,7 @@ export default function Session() {
                               />
                               <div className={styles.listTaskItemContent}>
                                 <span className={styles.listTaskItemTitle}>
-                                  {task.name}
+                                  {service.name}
                                 </span>
                               </div>
                             </div>
@@ -381,7 +443,7 @@ export default function Session() {
           </div>
           <div className={styles.contentRightWrapper}>
             <div className={styles.contentRightInner}>
-              <span className={styles.formTitle}>{selectedTaskName}</span>
+              <span className={styles.formTitle}>{selectedServiceName}</span>
               <span className={styles.formNote}>* mandatory field</span>
               <form
                 className={styles.formWrapper}
@@ -667,7 +729,7 @@ export default function Session() {
                       type="button"
                       className={styles.btnDone}
                       value="CANCEL"
-                      onClick={() => cancelTask()}
+                      onClick={() => cancelService()}
                     />
                   </div>
                 </div>
