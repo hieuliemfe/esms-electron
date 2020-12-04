@@ -73,11 +73,13 @@ import {
   setRelaxMode,
   setToken,
   setSuspension,
+  setLastAccessLogin,
   Suspension,
 } from '../login/loginSlice';
 import { setSessionId } from '../session/sessionSlice';
 import { setToken as setRequestToken } from '../../utils/request';
 import styles from './Home.css';
+import logo from '../../assets/esms_logo200.png';
 
 const twoDigits = (num: number | string) => `${`0${num}`.substr(-2)}`;
 
@@ -164,7 +166,6 @@ export default function Home() {
     selectEviPeriods
   ) as EvidencePeriods;
   const history = useHistory();
-  const logo = path.join(__dirname, '../resources/esms_logo200.png');
   const isShowShiftList = useSelector(selectIsShowShiftList);
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const isCheckedIn = useSelector(selectIsCheckedIn);
@@ -399,7 +400,8 @@ export default function Home() {
     ipcRenderer.send('reset-token');
     ipcRenderer.send('logout');
     dispatch(setLoading(false));
-    history.push('/');
+    dispatch(setLastAccessLogin(Date.now()));
+    history.goBack();
   };
 
   useEffect(() => {
@@ -498,62 +500,66 @@ export default function Home() {
   }, [isCheckedIn]);
 
   useEffect(() => {
-    const currentDate = new Date();
-    currentDate.setMilliseconds(0);
-    currentDate.setSeconds(0);
-    currentDate.setMinutes(0);
-    currentDate.setHours(0);
-    const startDate = new Date(currentDate);
-    if (isRelaxMode) {
-      startDate.setTime(
-        startDate.getTime() - (startDate.getDay() - 1) * 24 * 60 * 60 * 1000
-      );
-    } else if (currentDate.getDate() > 15) {
-      startDate.setDate(15);
-    } else {
-      startDate.setDate(1);
-    }
-    setMinDate(startDate);
-    const availableSessionDateData: AvailableSessionDateData = {
-      employeeCode: profile.employeeCode,
-      startDate: startDate.toJSON(),
-      endDate: currentDate.toJSON(),
-    };
-    availableSessionDate(availableSessionDateData)
-      .then((availableSessionDateResponse) => {
-        if (availableSessionDateResponse.success) {
-          const availableList = availableSessionDateResponse.message;
-          if (availableList) {
-            const dateList = Object.keys(availableList);
-            if (dateList.length > 0) {
-              const exDates: Date[] = [];
-              let slDate = new Date();
-              // eslint-disable-next-line no-plusplus
-              for (let i = 0; i < dateList.length; i++) {
-                const date = dateList[i];
-                if (Object.prototype.hasOwnProperty.call(availableList, date)) {
-                  const sessionCount = availableList[date];
-                  if (sessionCount === 0) {
-                    exDates.push(
-                      new Date(
+    if (userToken) {
+      const currentDate = new Date();
+      currentDate.setMilliseconds(0);
+      currentDate.setSeconds(0);
+      currentDate.setMinutes(0);
+      currentDate.setHours(0);
+      const startDate = new Date(currentDate);
+      if (isRelaxMode) {
+        startDate.setTime(
+          startDate.getTime() - (startDate.getDay() - 1) * 24 * 60 * 60 * 1000
+        );
+      } else if (currentDate.getDate() > 15) {
+        startDate.setDate(15);
+      } else {
+        startDate.setDate(1);
+      }
+      setMinDate(startDate);
+      const availableSessionDateData: AvailableSessionDateData = {
+        employeeCode: profile.employeeCode,
+        startDate: startDate.toJSON(),
+        endDate: currentDate.toJSON(),
+      };
+      availableSessionDate(availableSessionDateData)
+        .then((availableSessionDateResponse) => {
+          if (availableSessionDateResponse.success) {
+            const availableList = availableSessionDateResponse.message;
+            if (availableList) {
+              const dateList = Object.keys(availableList);
+              if (dateList.length > 0) {
+                const exDates: Date[] = [];
+                let slDate = new Date();
+                // eslint-disable-next-line no-plusplus
+                for (let i = 0; i < dateList.length; i++) {
+                  const date = dateList[i];
+                  if (
+                    Object.prototype.hasOwnProperty.call(availableList, date)
+                  ) {
+                    const sessionCount = availableList[date];
+                    if (sessionCount === 0) {
+                      exDates.push(
+                        new Date(
+                          `${date.split('-').reverse().join('-')}T00:00:00`
+                        )
+                      );
+                    } else {
+                      slDate = new Date(
                         `${date.split('-').reverse().join('-')}T00:00:00`
-                      )
-                    );
-                  } else {
-                    slDate = new Date(
-                      `${date.split('-').reverse().join('-')}T00:00:00`
-                    );
+                      );
+                    }
                   }
                 }
+                console.log('exDates', exDates);
+                setExcludeDates(exDates);
+                setSelectedDay(slDate);
               }
-              console.log('exDates', exDates);
-              setExcludeDates(exDates);
-              setSelectedDay(slDate);
             }
           }
-        }
-      })
-      .catch(console.log);
+        })
+        .catch(console.log);
+    }
   }, [userToken]);
 
   return (
@@ -599,6 +605,7 @@ export default function Home() {
             <div className={styles.avatarBox}>
               <img
                 className={styles.avatar}
+                draggable={false}
                 src={profile.avatarUrl}
                 alt="EmployeeAvatar"
               />
@@ -744,7 +751,12 @@ export default function Home() {
                   <></>
                 )}
               </div>
-              <img src={logo} alt="ESMSLogo" className={styles.greetingLogo} />
+              <img
+                src={logo}
+                alt="ESMSLogo"
+                className={styles.greetingLogo}
+                draggable={false}
+              />
             </div>
           </div>
           <div

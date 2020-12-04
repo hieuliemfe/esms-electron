@@ -18,6 +18,7 @@ const loginSlice = createSlice({
     shiftId: 0,
     relaxMode: false,
     suspension: {} as Suspension,
+    lastAccessLogin: Date.now(),
   },
   reducers: {
     setToken: (state, { payload }) => {
@@ -38,6 +39,9 @@ const loginSlice = createSlice({
     setSuspension: (state, { payload }) => {
       state.suspension = payload;
     },
+    setLastAccessLogin: (state, { payload }) => {
+      state.lastAccessLogin = payload;
+    },
   },
 });
 
@@ -48,6 +52,7 @@ export const {
   setShiftId,
   setRelaxMode,
   setSuspension,
+  setLastAccessLogin,
 } = loginSlice.actions;
 
 export default loginSlice.reducer;
@@ -63,3 +68,6 @@ export const selectShiftId = (state: RootState) => state.login.shiftId;
 export const selectRelaxMode = (state: RootState) => state.login.relaxMode;
 
 export const selectSuspension = (state: RootState) => state.login.suspension;
+
+export const selectLastAccessLogin = (state: RootState) =>
+  state.login.lastAccessLogin;

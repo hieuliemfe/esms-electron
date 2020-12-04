@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/no-autofocus */
-import React from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
-import path from 'path';
 import { ipcRenderer } from 'electron';
 import { useHistory } from 'react-router-dom';
 import routes from '../../constants/routes.json';
@@ -10,6 +11,7 @@ import { login, getProfile, ProfileInfo } from '../../services/root';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import { setLoggedIn } from '../home/homeSlice';
 import {
+  selectLastAccessLogin,
   setToken,
   setUserProfile,
   setCounterId,
@@ -21,12 +23,19 @@ import {
   ResponseError,
 } from '../../utils/request';
 import styles from './Login.css';
+import logo from '../../assets/esms_logo300.png';
 
 export default function Login() {
   const dispatch = useDispatch();
-  const { register, handleSubmit } = useForm();
+  const lastAccessLogin = useSelector(selectLastAccessLogin);
+  const { register, handleSubmit, reset } = useForm();
   const history = useHistory();
-  const logo = path.join(__dirname, '../resources/esms_logo300.png');
+
+  const preventClose = (ev: any) => {
+    // Setting any value other than undefined here will prevent the window
+    // from closing or reloading
+    ev.returnValue = true;
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
@@ -46,6 +55,7 @@ export default function Login() {
             dispatch(setCounterId(profileInfo.counterId));
             dispatch(setLoggedIn(true));
             ipcRenderer.send('login-success');
+            window.onbeforeunload = preventClose;
             history.push(routes.HOME);
           }
         }
@@ -77,6 +87,7 @@ export default function Login() {
             const message = `Your account is temporarily suspended due to some of your improper behaviors. You are now redirected to Relax Mode!`;
             dispatch(setRelaxMode(true));
             dispatch(setLoggedIn(true));
+            window.onbeforeunload = preventClose;
             ipcRenderer.send('suspension-warning', message);
           }
         }
@@ -86,10 +97,20 @@ export default function Login() {
     }
   };
 
+  useEffect(() => {
+    reset();
+    window.onbeforeunload = null;
+  }, [lastAccessLogin]);
+
   return (
     <div className={styles.container}>
       <div className={styles.logoWrapper}>
-        <img className={styles.logoImage} src={logo} alt="ESMSLogo" />
+        <img
+          className={styles.logoImage}
+          src={logo}
+          alt="ESMSLogo"
+          draggable={false}
+        />
       </div>
       <div className={styles.loginFormWrapper}>
         <h4 className={styles.title}>

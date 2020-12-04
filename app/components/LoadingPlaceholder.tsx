@@ -1,14 +1,17 @@
 import React from 'react';
-import path from 'path';
 import styles from './LoadingPlaceholder.css';
+import logo from '../assets/esms_logo300.png';
 
 export default function LoadingPlaceholder(): JSX.Element {
-  const logo = path.join(__dirname, '../resources/esms_logo300.png');
-
   return (
     <div className={styles.container}>
       <div className={styles.wrapper}>
-        <img src={logo} alt="ESMSLogo" className={styles.logo} />
+        <img
+          src={logo}
+          alt="ESMSLogo"
+          className={styles.logo}
+          draggable={false}
+        />
         <div className={styles.loadingBar}>
           <div className={styles.line} />
           <div className={`${styles.subline} ${styles.inc}`} />

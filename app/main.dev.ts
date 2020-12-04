@@ -25,6 +25,7 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn } from 'child_process';
+import electronLocalshortcut from 'electron-localshortcut';
 import { generateV4ReadSignedUrl } from './services/google-cloud';
 import runChildProcess, {
   DETECTION_PATH,
@@ -66,13 +67,13 @@ if (
 //   ).catch(console.log);
 // };
 
-const RESOURCES_PATH = app.isPackaged
-  ? path.join(process.resourcesPath, 'resources')
-  : path.join(__dirname, '../resources');
+// const RESOURCES_PATH = app.isPackaged
+//   ? path.join(process.resourcesPath, 'resources')
+//   : path.join(__dirname, '../resources');
 
-const getAssetPath = (...paths: string[]): string => {
-  return path.join(RESOURCES_PATH, ...paths);
-};
+// const getAssetPath = (...paths: string[]): string => {
+//   return path.join(RESOURCES_PATH, ...paths);
+// };
 
 const createMainWindow = async () => {
   // if (
@@ -88,7 +89,7 @@ const createMainWindow = async () => {
     height: 290,
     resizable: false,
     maximizable: false,
-    icon: getAssetPath('esms_logo200.png'),
+    icon: path.join(__dirname, 'assets', 'esms_logo200.png'),
     webPreferences:
       (process.env.NODE_ENV === 'development' ||
         process.env.E2E_BUILD === 'true') &&
@@ -97,6 +98,7 @@ const createMainWindow = async () => {
             nodeIntegration: true,
           }
         : {
+            // devTools: false,
             preload: path.join(__dirname, 'dist/renderer.prod.js'),
           },
   });
@@ -120,6 +122,24 @@ const createMainWindow = async () => {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  mainWindow.on('focus', () => {
+    if (mainWindow) {
+      electronLocalshortcut.register(
+        mainWindow,
+        ['CommandOrControl+R', 'CommandOrControl+Shift+R', 'F5'],
+        () => {
+          console.log('You pressed ctrl & R or F5');
+        }
+      );
+    }
+  });
+
+  mainWindow.on('blur', () => {
+    if (mainWindow) {
+      electronLocalshortcut.unregisterAll(mainWindow);
+    }
   });
 
   // const menuBuilder = new MenuBuilder(mainWindow);
@@ -229,10 +249,10 @@ ipcMain.on('logout', () => {
   }
 });
 
-process.env.OPENH264_LIBRARY = path.join(
-  DETECTION_PATH,
-  process.env.OPENH264_LIBRARY as string
-);
+// process.env.OPENH264_LIBRARY = path.join(
+//   DETECTION_PATH,
+//   process.env.OPENH264_LIBRARY as string
+// );
 
 const daemon = (script: any, args: any) => {
   // spawn the child using the same node process as ours

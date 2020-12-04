@@ -9,6 +9,8 @@ export const PYTHON_VENV_PATH = path.join(
 
 export const DETECTION_PATH = path.join(__dirname, '../detection/');
 
+export const ASSETS_PATH = path.join(__dirname, './assets');
+
 type CommunicationSocket = {
   SOCKET: net.Socket | null;
 };
@@ -69,9 +71,7 @@ export default function runChildProcess(): ChildProcess {
     return childPro;
   };
 
-  const childProcess = spawnChildProccess(
-    path.join(DETECTION_PATH, './dist/main.exe')
-  );
+  const childProcess = spawnChildProccess(path.join(ASSETS_PATH, './main.exe'));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   childProcess.stdout.on('data', (chunk: any) => {

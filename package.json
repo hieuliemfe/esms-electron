@@ -50,6 +50,7 @@
     "productName": "EsmsElectron",
     "appId": "fpt.edu.vn.EsmsElectron",
     "files": [
+      "assets/",
       "dist/",
       "node_modules/",
       "app.html",
@@ -179,6 +180,7 @@
     "@babel/preset-typescript": "^7.10.4",
     "@babel/register": "^7.10.5",
     "@teamsupercell/typings-for-css-modules-loader": "^2.2.1",
+    "@types/electron-localshortcut": "^3.1.0",
     "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/history": "^4.7.7",
@@ -261,6 +263,7 @@
     "@reduxjs/toolkit": "^1.4.0",
     "connected-react-router": "^6.6.1",
     "electron-debug": "^3.1.0",
+    "electron-localshortcut": "^3.2.1",
     "electron-log": "^4.2.4",
     "electron-updater": "^4.3.4",
     "fs": "^0.0.1-security",

@@ -1,6 +1,7 @@
 venv/
 evidences/*
 !evidences/.gitkeep
+**/assets/*.exe
 # Logs
 logs
 *.log

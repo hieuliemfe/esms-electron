@@ -34,10 +34,11 @@ import {
   createClientSocket,
   setComSocHandler,
   COMMUNICATION_SOCKET,
-  DETECTION_PATH,
+  ASSETS_PATH,
   // PYTHON_VENV_PATH,
 } from '../../socket.dev';
 import styles from './Session.css';
+import videoLogo from '../../assets/video.jpg';
 
 const fourDigits = (num: number | string) =>
   num > 999 ? num : `${`000${num}`.substr(-4)}`;
@@ -73,9 +74,7 @@ export default function Session() {
   const [selectedServiceName, setSelectedServiceName] = useState<
     string | undefined
   >();
-  const [frame, setFrame] = useState(
-    path.join(__dirname, '../resources/video.jpg')
-  );
+  const [frame, setFrame] = useState(videoLogo);
   const [needRetryConnect] = useState({ value: true });
   const [start, setStart] = useState(false);
   const [kill, setKill] = useState(false);
@@ -218,16 +217,15 @@ export default function Session() {
               } as EndSessionData;
               endSession(sessionId, endSessionInfo)
                 .then(() => {
-                  setFrame(path.join(__dirname, '../resources/video.jpg'));
-                  const childpro = daemon(
-                    path.join(DETECTION_PATH, './dist/upload.exe'),
-                    [
-                      '--fr',
-                      evidenceFolder.replace(/\\/g, '/'),
-                      '--to',
-                      evidenceFoldername,
-                    ]
-                  );
+                  setFrame(videoLogo);
+                  const uploadPath = path.join(ASSETS_PATH, './upload.exe');
+                  console.log('uploadPath', uploadPath);
+                  const childpro = daemon(uploadPath, [
+                    '--fr',
+                    evidenceFolder.replace(/\\/g, '/'),
+                    '--to',
+                    evidenceFoldername,
+                  ]);
                   console.log(childpro);
                   needRetryConnect.value = false;
                   dispatch(setLastUpdateSession(Date.now()));
@@ -286,7 +284,12 @@ export default function Session() {
       <div className={styles.workspaceWrapper}>
         <div className={styles.leftWrapper}>
           <div className={styles.cameraWrapper}>
-            <img alt="VideoImage" className={styles.cameraImage} src={frame} />
+            <img
+              alt="VideoImage"
+              className={styles.cameraImage}
+              src={frame}
+              draggable={false}
+            />
           </div>
           <div className={styles.angryWrapper}>
             <div className={styles.angryTitleWrapper}>
