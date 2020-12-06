@@ -47,6 +47,7 @@ export default function Login() {
           dispatch(setToken(loginResponse.token));
           setRequestToken(loginResponse.token);
           ipcRenderer.send('store-token', loginResponse.token);
+          ipcRenderer.send('get-evidence-path');
 
           const profileResponse = await getProfile();
           if (profileResponse.success) {
@@ -71,6 +72,7 @@ export default function Login() {
         dispatch(setToken(token));
         setRequestToken(token);
         ipcRenderer.send('store-token', token);
+        ipcRenderer.send('get-evidence-path');
         console.log('token', token);
         console.log('empErr', empErr);
 
@@ -100,6 +102,7 @@ export default function Login() {
   useEffect(() => {
     reset();
     window.onbeforeunload = null;
+    dispatch(setLoading(false));
   }, [lastAccessLogin]);
 
   return (

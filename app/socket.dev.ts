@@ -1,15 +1,5 @@
-import path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import net from 'net';
-
-export const PYTHON_VENV_PATH = path.join(
-  __dirname,
-  '../venv/1/Scripts/python.exe'
-);
-
-export const DETECTION_PATH = path.join(__dirname, '../detection/');
-
-export const ASSETS_PATH = path.join(__dirname, './assets');
 
 type CommunicationSocket = {
   SOCKET: net.Socket | null;
@@ -59,11 +49,15 @@ export const createClientSocket = (
   return comSoc;
 };
 
-export default function runChildProcess(): ChildProcess {
+export default function runChildProcess(
+  cmd: string,
+  env?: NodeJS.ProcessEnv
+): ChildProcess {
   const spawnChildProccess = (command: string, args?: readonly string[]) => {
     const childPro = spawn(command, args || [], {
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],
+      env: env || process.env,
     }).on('error', (err: Error) => {
       console.error('Child process spawning error:', err);
     });
@@ -71,7 +65,7 @@ export default function runChildProcess(): ChildProcess {
     return childPro;
   };
 
-  const childProcess = spawnChildProccess(path.join(ASSETS_PATH, './main.exe'));
+  const childProcess = spawnChildProccess(cmd);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   childProcess.stdout.on('data', (chunk: any) => {

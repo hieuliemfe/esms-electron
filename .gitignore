@@ -1,7 +1,8 @@
 venv/
 evidences/*
 !evidences/.gitkeep
-**/assets/*.exe
+resources/python/*
+!resources/python/.gitkeep
 # Logs
 logs
 *.log

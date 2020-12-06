@@ -12,10 +12,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import path from 'path';
-import { spawn } from 'child_process';
 import { ipcRenderer } from 'electron';
 import {
-  endSession,
   EmotionData,
   EmotionPeriodData,
   EndSessionData,
@@ -27,14 +25,13 @@ import {
   selectSessionId,
   SessionDetectedInfo,
 } from './sessionSlice';
-import { setLastUpdateSession } from '../home/homeSlice';
+import { selectEvidencePath } from '../home/homeSlice';
 import { selectCounterId } from '../login/loginSlice';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import {
   createClientSocket,
   setComSocHandler,
   COMMUNICATION_SOCKET,
-  ASSETS_PATH,
   // PYTHON_VENV_PATH,
 } from '../../socket.dev';
 import styles from './Session.css';
@@ -43,23 +40,11 @@ import videoLogo from '../../assets/video.jpg';
 const fourDigits = (num: number | string) =>
   num > 999 ? num : `${`000${num}`.substr(-4)}`;
 
-const daemon = (script: any, args: any) => {
-  // spawn the child using the same node process as ours
-  const child = spawn(script, args, {
-    detached: true,
-    stdio: 'ignore',
-  });
-
-  // required so the parent can exit
-  child.unref();
-
-  return child;
-};
-
 export default function Session() {
   const dispatch = useDispatch();
   const counterId = useSelector(selectCounterId);
   const sessionId = useSelector(selectSessionId);
+  const evidencePath = useSelector(selectEvidencePath);
   const history = useHistory();
   const [categoryList, setCategoryList] = useState<
     CategoryInfo[] | undefined
@@ -79,10 +64,7 @@ export default function Session() {
   const [start, setStart] = useState(false);
   const [kill, setKill] = useState(false);
   const evidenceFoldername = `session_${fourDigits(sessionId)}/`;
-  const evidenceFolder = path.join(
-    __dirname,
-    `../evidences/${evidenceFoldername}`
-  );
+  const evidenceFolder = path.join(evidencePath, `./${evidenceFoldername}`);
   const [isShowForm, setShowForm] = useState(false);
   const { register, handleSubmit, reset } = useForm();
   const [isShowWarning, setShowWarning] = useState(false);
@@ -186,7 +168,12 @@ export default function Session() {
                 setShowWarning(!!response.is_warning);
                 setFrame(`data:image/png;base64,${response.img_src}`);
               },
-              () => needRetryConnect.value
+              () => {
+                if (!needRetryConnect.value) {
+                  setFrame(videoLogo);
+                }
+                return needRetryConnect.value;
+              }
             );
             break;
           case 'SessionResult':
@@ -215,25 +202,10 @@ export default function Session() {
                 emotions: sessionEmotionInfo,
                 info: JSON.stringify(sessionDetectedResult.result),
               } as EndSessionData;
-              endSession(sessionId, endSessionInfo)
-                .then(() => {
-                  setFrame(videoLogo);
-                  const uploadPath = path.join(ASSETS_PATH, './upload.exe');
-                  console.log('uploadPath', uploadPath);
-                  const childpro = daemon(uploadPath, [
-                    '--fr',
-                    evidenceFolder.replace(/\\/g, '/'),
-                    '--to',
-                    evidenceFoldername,
-                  ]);
-                  console.log(childpro);
-                  needRetryConnect.value = false;
-                  dispatch(setLastUpdateSession(Date.now()));
-                  dispatch(setLoading(false));
-                  ipcRenderer.send('reset-session-id');
-                  history.goBack();
-                })
-                .catch((error) => console.log(error));
+              ipcRenderer.send('upload-session-result', endSessionInfo);
+              needRetryConnect.value = false;
+              dispatch(setLoading(false));
+              history.goBack();
             }
             break;
           default:

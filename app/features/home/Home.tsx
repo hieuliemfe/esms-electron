@@ -51,6 +51,7 @@ import {
   selectIsCheckedIn,
   selectLastUpdateSession,
   selectIsComSocReady,
+  selectEvidencePath,
   setEviVideo,
   setEviPeriod,
   setShowShiftList,
@@ -99,9 +100,6 @@ const getClientTime = (dateStr: string) => {
     date.getMinutes()
   )}:${twoDigits(date.getSeconds())}`;
 };
-
-const getLocalEviPath = (sessionId: number) =>
-  path.join(__dirname, `../evidences/session_${fourDigits(sessionId)}`);
 
 const localExist = (pathToFile: string) => fs.existsSync(pathToFile);
 
@@ -171,6 +169,7 @@ export default function Home() {
   const isCheckedIn = useSelector(selectIsCheckedIn);
   const isRelaxMode = useSelector(selectRelaxMode);
   const isComSocReady = useSelector(selectIsComSocReady);
+  const evidencePath = useSelector(selectEvidencePath);
   const currentSuspension: Suspension = useSelector(selectSuspension);
   const userToken = useSelector(selectToken);
   const shiftId = useSelector(selectShiftId);
@@ -189,6 +188,9 @@ export default function Home() {
   const [excludeDates, setExcludeDates] = useState<Date[]>([]);
   const [exitRelaxTimeout, setExitRelaxTimeout] = useState<NodeJS.Timeout>();
   const [waitingTimeout, setWaitingTimeout] = useState<NodeJS.Timeout>();
+
+  const getLocalEviPath = (sessionId: number) =>
+    path.join(evidencePath, `/session_${fourDigits(sessionId)}`);
 
   const skipCustomer = (waitingId: number) => {
     dispatch(setLoading(true));
@@ -385,7 +387,6 @@ export default function Home() {
     if (waitingTimeout) {
       clearTimeout(waitingTimeout);
     }
-    dispatch(setLoading(true));
     setRequestToken(null);
     dispatch(setCounterId(0));
     dispatch(setShiftId(0));
@@ -399,7 +400,6 @@ export default function Home() {
     dispatch(setSuspension({}));
     ipcRenderer.send('reset-token');
     ipcRenderer.send('logout');
-    dispatch(setLoading(false));
     dispatch(setLastAccessLogin(Date.now()));
     history.goBack();
   };
@@ -770,7 +770,7 @@ export default function Home() {
               </span>
               <div
                 className={`${styles.waitingList} ${
-                  isComSocReady ? '' : styles.notReady
+                  isComSocReady && evidencePath ? '' : styles.notReady
                 }`}
               >
                 {waitingList && waitingList.length > 0 ? (

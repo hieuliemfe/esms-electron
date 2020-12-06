@@ -14,6 +14,7 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
+import fs from 'fs';
 import {
   app,
   ipcMain,
@@ -25,10 +26,9 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn } from 'child_process';
-import electronLocalshortcut from 'electron-localshortcut';
+import fetch from 'node-fetch';
 import { generateV4ReadSignedUrl } from './services/google-cloud';
 import runChildProcess, {
-  DETECTION_PATH,
   COMMUNICATION_PORT,
   createClientSocket,
 } from './socket.dev';
@@ -67,13 +67,21 @@ if (
 //   ).catch(console.log);
 // };
 
-// const RESOURCES_PATH = app.isPackaged
-//   ? path.join(process.resourcesPath, 'resources')
-//   : path.join(__dirname, '../resources');
+const RESOURCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'resources')
+  : path.join(__dirname, '../resources');
 
-// const getAssetPath = (...paths: string[]): string => {
-//   return path.join(RESOURCES_PATH, ...paths);
-// };
+const getAssetPath = (...paths: string[]): string => {
+  return path.join(RESOURCES_PATH, ...paths);
+};
+
+const EVIDENCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'evidences')
+  : path.join(__dirname, '../evidences');
+
+const getEvidencePath = (...paths: string[]): string => {
+  return path.join(EVIDENCES_PATH, ...paths);
+};
 
 const createMainWindow = async () => {
   // if (
@@ -89,7 +97,7 @@ const createMainWindow = async () => {
     height: 290,
     resizable: false,
     maximizable: false,
-    icon: path.join(__dirname, 'assets', 'esms_logo200.png'),
+    icon: getAssetPath('icon.png'),
     webPreferences:
       (process.env.NODE_ENV === 'development' ||
         process.env.E2E_BUILD === 'true') &&
@@ -124,24 +132,6 @@ const createMainWindow = async () => {
     mainWindow = null;
   });
 
-  mainWindow.on('focus', () => {
-    if (mainWindow) {
-      electronLocalshortcut.register(
-        mainWindow,
-        ['CommandOrControl+R', 'CommandOrControl+Shift+R', 'F5'],
-        () => {
-          console.log('You pressed ctrl & R or F5');
-        }
-      );
-    }
-  });
-
-  mainWindow.on('blur', () => {
-    if (mainWindow) {
-      electronLocalshortcut.unregisterAll(mainWindow);
-    }
-  });
-
   // const menuBuilder = new MenuBuilder(mainWindow);
   // menuBuilder.buildMenu();
 
@@ -161,6 +151,50 @@ const createWindows = async () => {
 
 const APP_BACKUP = { token: '', sessionId: 0 };
 
+const daemon = (script: any, args: any) => {
+  // spawn the child using the same node process as ours
+  const child = spawn(script, args, {
+    detached: true,
+    stdio: 'ignore',
+  });
+
+  // required so the parent can exit
+  child.unref();
+
+  return child;
+};
+
+const fourDigits = (num: number | string) =>
+  num > 999 ? num : `${`000${num}`.substr(-4)}`;
+
+const uploadSessionResult = (endSessionInfo: any) => {
+  if (APP_BACKUP.token && APP_BACKUP.sessionId !== 0) {
+    const evidenceFoldername = `session_${fourDigits(APP_BACKUP.sessionId)}/`;
+    const evidenceFolder = getEvidencePath(evidenceFoldername);
+    console.log('[TEST]:---evidenceFolder', evidenceFolder);
+    return fetch(`${API_ENDPOINT}/sessions/${APP_BACKUP.sessionId}/end`, {
+      method: 'put',
+      body: JSON.stringify(endSessionInfo),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${APP_BACKUP.token}`,
+      },
+    })
+      .then((res: any) => res.json())
+      .then(() => {
+        const childpro = daemon(getAssetPath('python/upload.exe'), [
+          '--fr',
+          evidenceFolder.replace(/\\/g, '/'),
+          '--to',
+          evidenceFoldername,
+        ]);
+        console.log('[CHILD_PROCESS]:--upload.exe', childpro);
+      })
+      .catch(console.log);
+  }
+  return new Promise(() => {});
+};
+
 ipcMain.on('store-token', (event: IpcMainEvent, token: string) => {
   if (event && token) {
     APP_BACKUP.token = token;
@@ -179,6 +213,26 @@ ipcMain.on('store-session-id', (event: IpcMainEvent, sessionId: number) => {
 
 ipcMain.on('reset-session-id', () => {
   APP_BACKUP.sessionId = 0;
+});
+
+ipcMain.on(
+  'upload-session-result',
+  (event: IpcMainEvent, endSessionInfo: any) => {
+    if (event && endSessionInfo) {
+      uploadSessionResult(endSessionInfo)
+        .then(() => {
+          APP_BACKUP.sessionId = 0;
+          event.sender.send('uploaded-session-result');
+        })
+        .catch(console.log);
+    }
+  }
+);
+
+ipcMain.on('get-evidence-path', (event: IpcMainEvent) => {
+  if (event) {
+    event.sender.send('evidence-path', EVIDENCES_PATH);
+  }
 });
 
 ipcMain.on('login-failed', (event: IpcMainEvent, message: string) => {
@@ -237,8 +291,15 @@ ipcMain.on(
   'retrieve-from-local',
   (event: IpcMainEvent, objName: string, filePath: string) => {
     if (event && objName && filePath) {
-      const result = require(filePath);
-      event.sender.send('retrieved-result', objName, result);
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          const result = JSON.parse(data.toString());
+          console.log('retrieve-from-local result', result);
+          event.sender.send('retrieved-result', objName, result);
+        }
+      });
     }
   }
 );
@@ -249,33 +310,21 @@ ipcMain.on('logout', () => {
   }
 });
 
-// process.env.OPENH264_LIBRARY = path.join(
-//   DETECTION_PATH,
-//   process.env.OPENH264_LIBRARY as string
-// );
+process.env.OPENH264_LIBRARY = getAssetPath('codec/openh264-1.8.0-win64.dll');
 
-const daemon = (script: any, args: any) => {
-  // spawn the child using the same node process as ours
-  const child = spawn(script, args, {
-    detached: true,
-    stdio: 'ignore',
-  });
-
-  // required so the parent can exit
-  child.unref();
-
-  return child;
-};
-
-const fourDigits = (num: number | string) =>
-  num > 999 ? num : `${`000${num}`.substr(-4)}`;
-
-const CHILD_PROCESS = runChildProcess();
+const CHILD_PROCESS = runChildProcess(
+  getAssetPath('python/main.exe'),
+  process.env
+);
 
 app.on('window-all-closed', () => {
-  console.log(`[CHILD_PROCESS]: pid=${CHILD_PROCESS.pid}`);
-  console.log(`[CHILD_PROCESS]: spawnfile=${CHILD_PROCESS.spawnfile}`);
-  console.log(`[CHILD_PROCESS]: spawnargs=${CHILD_PROCESS.spawnargs}`);
+  console.log(`[CHILD_PROCESS]:--main.exe: pid=${CHILD_PROCESS.pid}`);
+  console.log(
+    `[CHILD_PROCESS]:--main.exe: spawnfile=${CHILD_PROCESS.spawnfile}`
+  );
+  console.log(
+    `[CHILD_PROCESS]:--main.exe: spawnargs=${CHILD_PROCESS.spawnargs}`
+  );
   const CAMERA_SOCKET_RETRYCON = { isCameraStop: false };
   const COMMUNICATION_SOCKET_RETRYCON = { retry: true };
   createClientSocket(
@@ -317,36 +366,7 @@ app.on('window-all-closed', () => {
             info: JSON.stringify(sessionDetectedResult.result),
           };
           if (APP_BACKUP.token && APP_BACKUP.sessionId !== 0) {
-            const evidenceFoldername = `session_${fourDigits(
-              APP_BACKUP.sessionId
-            )}/`;
-            const evidenceFolder = path.join(
-              __dirname,
-              `../evidences/${evidenceFoldername}`
-            );
-            console.log('[TEST]:---evidenceFolder', evidenceFolder);
-            const fetch = require('node-fetch');
-            fetch(`${API_ENDPOINT}/sessions/${APP_BACKUP.sessionId}/end`, {
-              method: 'put',
-              body: JSON.stringify(endSessionInfo),
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${APP_BACKUP.token}`,
-              },
-            })
-              .then((res: any) => res.json())
-              .then(() => {
-                const childpro = daemon(
-                  path.join(DETECTION_PATH, './dist/upload.exe'),
-                  [
-                    '--fr',
-                    evidenceFolder.replace(/\\/g, '/'),
-                    '--to',
-                    evidenceFoldername,
-                  ]
-                );
-                console.log(childpro);
-              })
+            uploadSessionResult(endSessionInfo)
               .then(() => {
                 // Respect the OSX convention of having the application in memory even
                 // after all windows have been closed

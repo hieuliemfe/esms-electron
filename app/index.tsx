@@ -17,6 +17,8 @@ import {
   addEviPeriod,
   setLoggedIn,
   setComSocReady,
+  setLastUpdateSession,
+  setEvidencePath,
 } from './features/home/homeSlice';
 import request from './utils/request';
 import './app.global.css';
@@ -99,6 +101,18 @@ ipcRenderer.on('exit-relax-mode-dialog-closed', (event) => {
     if (isRelaxMode) {
       store.dispatch(setLoggedIn(false));
     }
+  }
+});
+
+ipcRenderer.on('uploaded-session-result', (event) => {
+  if (event) {
+    store.dispatch(setLastUpdateSession(Date.now()));
+  }
+});
+
+ipcRenderer.on('evidence-path', (event, eviPath) => {
+  if (event && eviPath) {
+    store.dispatch(setEvidencePath(eviPath));
   }
 });
 
