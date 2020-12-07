@@ -1,6 +1,6 @@
 {
   "name": "esms-electron",
-  "productName": "EsmsElectron",
+  "productName": "EsmsClient",
   "version": "1.0.0",
   "description": "Electron application based on React, React Router, Webpack, React Hot Loader for dealing with ESMS Capstone Project",
   "scripts": {
@@ -47,7 +47,7 @@
     ]
   },
   "build": {
-    "productName": "EsmsElectron",
+    "productName": "EsmsClient",
     "appId": "fpt.edu.vn.EsmsElectron",
     "files": [
       "assets/",
