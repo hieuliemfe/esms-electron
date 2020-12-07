@@ -294,6 +294,12 @@ span.cusInfo {
   font-size: 13px;
 }
 
+.fieldLabel.requiredField::before {
+  display: inline;
+  content: '*';
+  color: red;
+}
+
 .fieldWrapper.checkbox .fieldLabel {
   cursor: pointer;
 }

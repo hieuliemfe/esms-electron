@@ -33,6 +33,11 @@ body {
   cursor: pointer;
 }
 
+/* disable fullscreen button */
+video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
 /* datepicker */
 .react-datepicker__navigation--next {
   border-left-color: rgba(19, 121, 255, 0.3);

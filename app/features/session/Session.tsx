@@ -37,8 +37,17 @@ import {
 import styles from './Session.css';
 import videoLogo from '../../assets/video.jpg';
 
+const twoDigits = (num: number | string) => `${`0${num}`.substr(-2)}`;
+
 const fourDigits = (num: number | string) =>
   num > 999 ? num : `${`000${num}`.substr(-4)}`;
+
+const getClientDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return `${twoDigits(date.getDate())}/${twoDigits(
+    date.getMonth() + 1
+  )}/${date.getFullYear()}`;
+};
 
 export default function Session() {
   const dispatch = useDispatch();
@@ -66,7 +75,14 @@ export default function Session() {
   const evidenceFoldername = `session_${fourDigits(sessionId)}/`;
   const evidenceFolder = path.join(evidencePath, `./${evidenceFoldername}`);
   const [isShowForm, setShowForm] = useState(false);
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      currency: 'VND',
+      valdate: getClientDate(new Date().toJSON()),
+      aname: 'Nguyen Hieu Liem',
+      aaccnum: 65010001234569,
+    },
+  });
   const [isShowWarning, setShowWarning] = useState(false);
   const [isShowCustomerInfo, setShowCustomerInfo] = useState(false);
   let sessionDetectedResult: SessionDetectedInfo;
@@ -434,7 +450,11 @@ export default function Session() {
                     >
                       <div className={styles.lineWrapper}>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>*Currency:</span>
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Currency:
+                          </span>
                           <input
                             ref={register({ required: true })}
                             type="text"
@@ -444,8 +464,10 @@ export default function Session() {
                           />
                         </div>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            *Amount in Figures:
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Amount in Figures:
                           </span>
                           <input
                             ref={register({ required: true })}
@@ -456,8 +478,10 @@ export default function Session() {
                           />
                         </div>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            *Amount in Words:
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Amount in Words:
                           </span>
                           <input
                             ref={register({ required: true })}
@@ -468,8 +492,10 @@ export default function Session() {
                           />
                         </div>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            *Value Date:
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Value Date:
                           </span>
                           <input
                             ref={register({ required: true })}
@@ -493,8 +519,10 @@ export default function Session() {
                     >
                       <div className={styles.lineWrapper}>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            *Name and Address of Beneficiary&apos;s Bank:
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Name and Address of Beneficiary&apos;s Bank:
                           </span>
                           <textarea
                             ref={register({ required: true })}
@@ -507,7 +535,11 @@ export default function Session() {
                       </div>
                       <div className={styles.lineWrapper}>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>*Name:</span>
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Name:
+                          </span>
                           <input
                             ref={register({ required: true })}
                             type="text"
@@ -517,8 +549,10 @@ export default function Session() {
                           />
                         </div>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            *Account Number:
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Account Number:
                           </span>
                           <input
                             ref={register({ required: true })}
@@ -572,7 +606,11 @@ export default function Session() {
                     >
                       <div className={styles.lineWrapper}>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>*Name:</span>
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Name:
+                          </span>
                           <input
                             ref={register({ required: true })}
                             type="text"
@@ -582,8 +620,10 @@ export default function Session() {
                           />
                         </div>
                         <div className={styles.fieldWrapper}>
-                          <span className={styles.fieldLabel}>
-                            *Account Number:
+                          <span
+                            className={`${styles.fieldLabel} ${styles.requiredField}`}
+                          >
+                            Account Number:
                           </span>
                           <input
                             ref={register({ required: true })}
@@ -617,6 +657,7 @@ export default function Session() {
                 </div>
                 <div className={styles.formBlockHalf}>
                   <span className={styles.formSubtitle}>
+                    <span className={styles.required}>*</span>
                     Local charges to be paid by:
                   </span>
                   <div
@@ -630,7 +671,7 @@ export default function Session() {
                           Remitter
                         </label>
                         <input
-                          ref={register()}
+                          ref={register({ required: true })}
                           id="localRe"
                           type="checkbox"
                           name="local"
@@ -656,6 +697,7 @@ export default function Session() {
                 </div>
                 <div className={styles.formBlockHalf}>
                   <span className={styles.formSubtitle}>
+                    <span className={styles.required}>*</span>
                     Overseas charges to be paid by:
                   </span>
                   <div
@@ -669,7 +711,7 @@ export default function Session() {
                           Remitter
                         </label>
                         <input
-                          ref={register()}
+                          ref={register({ required: true })}
                           id="overRe"
                           type="checkbox"
                           name="over"
