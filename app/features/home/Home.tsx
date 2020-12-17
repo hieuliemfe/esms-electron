@@ -188,6 +188,7 @@ export default function Home() {
   const [excludeDates, setExcludeDates] = useState<Date[]>([]);
   const [exitRelaxTimeout, setExitRelaxTimeout] = useState<NodeJS.Timeout>();
   const [waitingTimeout, setWaitingTimeout] = useState<NodeJS.Timeout>();
+  const [isOpenedMail, setOpenedMail] = useState(false);
 
   const getLocalEviPath = (sessionId: number) =>
     path.join(evidencePath, `/session_${fourDigits(sessionId)}`);
@@ -202,6 +203,11 @@ export default function Home() {
         }
       })
       .catch(console.log);
+  };
+
+  const openMail = () => {
+    ipcRenderer.send('open-link', 'https://mail.yandex.com/');
+    setOpenedMail(true);
   };
 
   const removeCustomer = (waitingId: number) => {
@@ -320,15 +326,17 @@ export default function Home() {
     console.log('[eviPeriods]:', eviPeriods);
   }, [eviPeriods]);
 
-  const startSession = (waitingId: number) => {
+  const startSession = (waiting: WaitingInfo) => {
     if (waitingTimeout) {
       clearTimeout(waitingTimeout);
     }
     dispatch(setLoading(true));
-    assignWaiting(counterId, waitingId)
+    assignWaiting(counterId, waiting.id)
       .then(async (assignResponse) => {
         if (assignResponse.success) {
-          const createSessionResponse = await createSession();
+          const createSessionResponse = await createSession(
+            waiting.customerName
+          );
           if (createSessionResponse.success) {
             const sessionInfo = createSessionResponse.message;
             dispatch(setSessionId(sessionInfo.id));
@@ -591,9 +599,24 @@ export default function Home() {
               )}
             </div>
             <span className={styles.btnText}>
-              {`${isRelaxMode ? 'Guideline' : 'Shifts'}`}
+              {`${isRelaxMode ? 'Guidelines' : 'Shifts'}`}
             </span>
           </div>
+          {currentSuspension.id ? (
+            <div
+              className={`${styles.btnNav} ${styles.active} ${
+                !isOpenedMail ? styles.hasNoti : ''
+              }`}
+              onClick={() => openMail()}
+            >
+              <div className={styles.iconBox}>
+                <i className="fas fa-envelope" />
+              </div>
+              <span className={styles.btnText}>Mail</span>
+            </div>
+          ) : (
+            <></>
+          )}
           <div className={styles.btnNav} onClick={() => logout()}>
             <div className={styles.iconBox}>
               <i className="fa fa-sign-out-alt" />
@@ -788,7 +811,7 @@ export default function Home() {
                           />
                           <div
                             className={styles.startSessionBtn}
-                            onClick={() => startSession(waiting.id)}
+                            onClick={() => startSession(waiting)}
                           >
                             Start Session
                           </div>
@@ -940,6 +963,9 @@ export default function Home() {
                               {`session_${fourDigits(session.id)}`}
                             </span>
                             <span />
+                            <span className={styles.stime}>
+                              {`Customer: ${session.customerName || 'N/A'}`}
+                            </span>
                             <span className={styles.stime}>
                               {`Date: ${getClientDate(session.sessionStart)}`}
                             </span>

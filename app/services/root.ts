@@ -1,10 +1,13 @@
 import request, { EsmsResponse } from '../utils/request';
+// eslint-disable-next-line import/no-cycle
+import { Suspension } from '../features/login/loginSlice';
 import { CounterInfo } from './counters';
 
 type LoginInfo = {
   employeeCode: string;
   roleName: string;
   Counter: CounterInfo;
+  suspensions?: Suspension[];
 };
 
 type LoginResponse = EsmsResponse<LoginInfo> & {

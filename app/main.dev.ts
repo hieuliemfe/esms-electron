@@ -17,6 +17,7 @@ import path from 'path';
 import fs from 'fs';
 import {
   app,
+  shell,
   ipcMain,
   dialog,
   BrowserWindow,
@@ -307,6 +308,12 @@ ipcMain.on(
 ipcMain.on('logout', () => {
   if (mainWindow) {
     mainWindow.unmaximize();
+  }
+});
+
+ipcMain.on('open-link', (event: IpcMainEvent, link: string) => {
+  if (event && link) {
+    shell.openExternal(link);
   }
 });
 

@@ -51,6 +51,39 @@
   cursor: pointer;
 }
 
+.btnNav.hasNoti {
+  position: relative;
+}
+
+.btnNav.hasNoti::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: #fff;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  -webkit-box-shadow: -3px 3px 8px 0 rgba(20, 121, 255, 0.5);
+  -moz-box-shadow: -3px 3px 8px 0 rgba(20, 121, 255, 0.5);
+  box-shadow: -3px 3px 8px 0 rgba(20, 121, 255, 0.5);
+}
+
+.btnNav.hasNoti::after {
+  content: '';
+  display: block;
+  width: 12px;
+  height: 12px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: #1479ff;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+}
+
 .iconBox {
   display: flex;
   width: 50px;

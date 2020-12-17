@@ -20,6 +20,7 @@ export type SessionSummaryInfo = {
 export type SessionInfo = {
   id: number;
   employeeId: string;
+  customerName: string;
   sessionStart: string;
   sessionEnd: string;
   sessionDuration: number;
@@ -61,8 +62,12 @@ type CreateSessionInfo = {
 
 type CreateSessionResponse = EsmsResponse<CreateSessionInfo>;
 
-export async function createSession(): Promise<CreateSessionResponse> {
-  return request.post('/sessions') as Promise<CreateSessionResponse>;
+export async function createSession(
+  customerName: string
+): Promise<CreateSessionResponse> {
+  return request.post(`/sessions?customerName=${customerName}`) as Promise<
+    CreateSessionResponse
+  >;
 }
 
 export type EmotionPeriodData = {

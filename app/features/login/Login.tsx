@@ -54,6 +54,12 @@ export default function Login() {
             const profileInfo: ProfileInfo = profileResponse.message;
             dispatch(setUserProfile(profileInfo));
             dispatch(setCounterId(profileInfo.counterId));
+            const { suspensions } = loginResponse.message;
+            if (suspensions && suspensions[0]) {
+              const suspension = suspensions[0];
+              dispatch(setSuspension(suspension));
+              console.log('suspension', suspension);
+            }
             dispatch(setLoggedIn(true));
             ipcRenderer.send('login-success');
             window.onbeforeunload = preventClose;
