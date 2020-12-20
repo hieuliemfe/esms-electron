@@ -25,7 +25,7 @@ import {
   selectSessionId,
   SessionDetectedInfo,
 } from './sessionSlice';
-import { selectEvidencePath } from '../home/homeSlice';
+import { selectEvidencePath, selectCustomerName } from '../home/homeSlice';
 import { selectCounterId } from '../login/loginSlice';
 import { setLoading } from '../../components/loading-bar/loadingBarSlice';
 import {
@@ -54,6 +54,7 @@ export default function Session() {
   const counterId = useSelector(selectCounterId);
   const sessionId = useSelector(selectSessionId);
   const evidencePath = useSelector(selectEvidencePath);
+  const customerName = useSelector(selectCustomerName);
   const history = useHistory();
   const [categoryList, setCategoryList] = useState<
     CategoryInfo[] | undefined
@@ -79,7 +80,7 @@ export default function Session() {
     defaultValues: {
       currency: 'VND',
       valdate: getClientDate(new Date().toJSON()),
-      aname: 'Nguyen Hieu Liem',
+      aname: customerName || 'Nguyen Hieu Liem',
       aaccnum: 65010001234569,
     },
   });
@@ -304,7 +305,9 @@ export default function Session() {
                     <div
                       className={`${styles.formBlock} ${styles.formBlockFull} ${styles.flexEnd}`}
                     >
-                      <span className={styles.cusInfo}>Nguyen Hieu Liem</span>
+                      <span className={styles.cusInfo}>
+                        {`${customerName || 'Nguyen Hieu Liem'}`}
+                      </span>
                     </div>
                   </div>
                   <div className={styles.formBlockFull}>

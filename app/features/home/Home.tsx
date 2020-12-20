@@ -57,6 +57,7 @@ import {
   setShowShiftList,
   setCheckedIn,
   setLastUpdateSession,
+  setCustomerName,
   EvidencePeriods,
   EvidenceUrls,
 } from './homeSlice';
@@ -341,6 +342,7 @@ export default function Home() {
             const sessionInfo = createSessionResponse.message;
             dispatch(setSessionId(sessionInfo.id));
             dispatch(setLoading(false));
+            dispatch(setCustomerName(waiting.customerName));
             ipcRenderer.send('store-session-id', sessionInfo.id);
             history.push(routes.SESSION);
           }
@@ -428,7 +430,12 @@ export default function Home() {
     const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
     if (isRelaxMode) {
       startDate.setTime(
-        startDate.getTime() - (startDate.getDay() - 1) * 24 * 60 * 60 * 1000
+        startDate.getTime() -
+          ((startDate.getDay() !== 0 ? startDate.getDay() : 7) - 1) *
+            24 *
+            60 *
+            60 *
+            1000
       );
     }
     const getSessionSummaryData: GetSessionSummaryData = {
@@ -517,7 +524,12 @@ export default function Home() {
       const startDate = new Date(currentDate);
       if (isRelaxMode) {
         startDate.setTime(
-          startDate.getTime() - (startDate.getDay() - 1) * 24 * 60 * 60 * 1000
+          startDate.getTime() -
+            ((startDate.getDay() !== 0 ? startDate.getDay() : 7) - 1) *
+              24 *
+              60 *
+              60 *
+              1000
         );
       } else if (currentDate.getDate() > 15) {
         startDate.setDate(15);
@@ -574,7 +586,9 @@ export default function Home() {
     <div className={styles.container}>
       <div className={styles.sideBar}>
         <span className={styles.appName}>
-          {`${isRelaxMode ? 'EsmsRelax' : 'EsmsApp'}`}
+          <span>ESMS</span>
+          <br />
+          <span>{`${isRelaxMode ? 'RelaxMode' : 'BankTellerApp'}`}</span>
         </span>
         <div className={styles.navigation}>
           <div
@@ -599,7 +613,7 @@ export default function Home() {
               )}
             </div>
             <span className={styles.btnText}>
-              {`${isRelaxMode ? 'Guidelines' : 'Shifts'}`}
+              {`${isRelaxMode ? 'Guideline' : 'Shifts'}`}
             </span>
           </div>
           {currentSuspension.id ? (
