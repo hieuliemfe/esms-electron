@@ -56,7 +56,6 @@ import {
   setEviPeriod,
   setShowShiftList,
   setCheckedIn,
-  setLastUpdateSession,
   setCustomerName,
   EvidencePeriods,
   EvidenceUrls,
@@ -190,6 +189,7 @@ export default function Home() {
   const [exitRelaxTimeout, setExitRelaxTimeout] = useState<NodeJS.Timeout>();
   const [waitingTimeout, setWaitingTimeout] = useState<NodeJS.Timeout>();
   const [isOpenedMail, setOpenedMail] = useState(false);
+  const [lastUpdateWaiting, setLastUpdateWaiting] = useState(Date.now());
 
   const getLocalEviPath = (sessionId: number) =>
     path.join(evidencePath, `/session_${fourDigits(sessionId)}`);
@@ -199,7 +199,7 @@ export default function Home() {
     skipWaiting(waitingId)
       .then((skipResponse) => {
         if (skipResponse.success) {
-          dispatch(setLastUpdateSession(Date.now()));
+          dispatch(setLastUpdateWaiting(Date.now()));
           dispatch(setLoading(false));
         }
       })
@@ -216,7 +216,7 @@ export default function Home() {
     removeWaiting(waitingId)
       .then((removeResponse) => {
         if (removeResponse.success) {
-          dispatch(setLastUpdateSession(Date.now()));
+          dispatch(setLastUpdateWaiting(Date.now()));
           dispatch(setLoading(false));
         }
       })
@@ -328,9 +328,6 @@ export default function Home() {
   }, [eviPeriods]);
 
   const startSession = (waiting: WaitingInfo) => {
-    if (waitingTimeout) {
-      clearTimeout(waitingTimeout);
-    }
     dispatch(setLoading(true));
     assignWaiting(counterId, waiting.id)
       .then(async (assignResponse) => {
@@ -344,6 +341,9 @@ export default function Home() {
             dispatch(setLoading(false));
             dispatch(setCustomerName(waiting.customerName));
             ipcRenderer.send('store-session-id', sessionInfo.id);
+            if (waitingTimeout) {
+              clearTimeout(waitingTimeout);
+            }
             history.push(routes.SESSION);
           }
         }
@@ -419,6 +419,12 @@ export default function Home() {
       logout();
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isRelaxMode && isCheckedIn) {
+      getCustomerWaitingList();
+    }
+  }, [lastUpdateWaiting]);
 
   useEffect(() => {
     dispatch(setLoading(true));
@@ -580,7 +586,7 @@ export default function Home() {
         })
         .catch(console.log);
     }
-  }, [userToken]);
+  }, [userToken, lastUpdateSession]);
 
   return (
     <div className={styles.container}>

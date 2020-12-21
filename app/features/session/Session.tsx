@@ -84,6 +84,10 @@ export default function Session() {
       aaccnum: 65010001234569,
     },
   });
+  const {
+    register: registerSearchCustomer,
+    handleSubmit: handleSubmitSearchCustomer,
+  } = useForm();
   const [isShowWarning, setShowWarning] = useState(false);
   const [isShowCustomerInfo, setShowCustomerInfo] = useState(false);
   let sessionDetectedResult: SessionDetectedInfo;
@@ -285,8 +289,13 @@ export default function Session() {
               <span className={styles.angryTitle}>Session Information</span>
             </div>
             <div className={styles.angryListWrapper}>
-              <div className={styles.searchCustomerWrapper}>
+              <form
+                className={styles.searchCustomerWrapper}
+                onSubmit={handleSubmitSearchCustomer(searchCustomer)}
+              >
                 <input
+                  ref={registerSearchCustomer()}
+                  name="customerName"
                   type="text"
                   className={styles.searchCusInput}
                   placeholder="Search for Customer"
@@ -297,7 +306,7 @@ export default function Session() {
                 >
                   <i className="fas fa-search" />
                 </div>
-              </div>
+              </form>
               {isShowCustomerInfo ? (
                 <>
                   <div className={styles.formBlockFull}>
